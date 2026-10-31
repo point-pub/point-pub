@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}السلة - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="cart-section">
+    <h1>🛒 سلة المشتريات</h1>
+
+    {% if items %}
+    <div class="cart-items">
+        {% for item in items %}
+        <div class="cart-item">
+            <img src="{{ url_for('static', filename='images/products/' + item.product.image) if item.product.image else 'https://via.placeholder.com/100x100/0a1929/f5c842?text=PP' }}" alt="{{ item.product.name }}">
+            <div class="cart-item-info">
+                <h3>{{ item.product.name }}</h3>
+                <p>{{ item.product.price }} دج</p>
+            </div>
+            <div class="cart-item-qty">
+                <a href="{{ url_for('update_cart', id=item.product.id, qty=item.quantity - 1) }}">-</a>
+                <span>{{ item.quantity }}</span>
+                <a href="{{ url_for('update_cart', id=item.product.id, qty=item.quantity + 1) }}">+</a>
+            </div>
+            <p class="cart-item-subtotal">{{ item.subtotal }} دج</p>
+            <a href="{{ url_for('remove_from_cart', id=item.product.id) }}" class="btn-remove">🗑️</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="cart-total">
+        <h2>المجموع: {{ total }} دج</h2>
+        <a href="{{ url_for('checkout') }}" class="btn-primary">إتمام الطلب ←</a>
+    </div>
+    {% else %}
+    <p class="empty-cart">السلة فارغة</p>
+    <a href="{{ url_for('shop') }}" class="btn-primary">تسوق الآن</a>
+    {% endif %}
+</section>
+{% endblock %}

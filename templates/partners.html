@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}الشركاء - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="partners-section">
+    <h1>الشركاء</h1>
+    <p class="subtitle">انضم إلى شبكة شركاء POINT PUB</p>
+
+    <div class="partners-info">
+        <h2>لماذا تصبح شريكاً؟</h2>
+        <ul>
+            <li>عروض حصرية للشركاء</li>
+            <li>دعم تسويقي مستمر</li>
+            <li>أسعار تنافسية</li>
+            <li>شراكة مربحة للطرفين</li>
+        </ul>
+    </div>
+
+    <form method="POST" class="partners-form">
+        <h2>طلب شراكة</h2>
+
+        <input type="text" name="company_name" placeholder="اسم الشركة" required>
+        
+        <select name="sector" id="sector_select" required>
+            <option value="">اختر المجال / القطاع</option>
+            
+            <optgroup label="المطاعم والمقاهي">
+                <option value="restaurant">مطعم</option>
+                <option value="cafe">مقهى</option>
+                <option value="fast_food">وجبات سريعة</option>
+                <option value="bakery">مخبزة / حلويات</option>
+                <option value="pastry">حلويات تقليدية</option>
+                <option value="juice_bar">محل عصائر</option>
+                <option value="ice_cream">مثلجات</option>
+                <option value="catering">خدمات تموين (Catering)</option>
+                <option value="food_truck">عربة طعام متنقلة</option>
+            </optgroup>
+
+            <optgroup label="التجزئة والملابس">
+                <option value="clothing">متجر ملابس (عام)</option>
+                <option value="menswear">ملابس رجالية</option>
+                <option value="womenswear">ملابس نسائية</option>
+                <option value="kidswear">ملابس أطفال</option>
+                <option value="shoes">متجر أحذية</option>
+                <option value="bags">حقائب وإكسسوارات</option>
+                <option value="jewelry">مجوهرات وساعات</option>
+                <option value="glasses">نظارات</option>
+                <option value="perfume">عطور ومستحضرات تجميل</option>
+                <option value="supermarket">سوبر ماركت / بقالة</option>
+                <option value="furniture">أثاث ومفروشات</option>
+                <option value="home_appliances">أجهزة منزلية</option>
+                <option value="electronics">إلكترونيات</option>
+                <option value="phone_store">متجر هواتف</option>
+                <option value="computer_store">متجر حواسيب</option>
+                <option value="toys">ألعاب أطفال</option>
+                <option value="stationery">قرطاسية ومكتبات</option>
+                <option value="flowers">محل زهور</option>
+                <option value="pets">مستلزمات الحيوانات الأليفة</option>
+                <option value="sports_equipment">معدات رياضية</option>
+            </optgroup>
+
+            <optgroup label="الصحة والجمال">
+                <option value="pharmacy">صيدلية</option>
+                <option value="clinic">عيادة / مركز طبي</option>
+                <option value="dental">عيادة أسنان</option>
+                <option value="lab">مختبر تحاليل</option>
+                <option value="optician">بصريات</option>
+                <option value="beauty_salon">صالون تجميل نسائي</option>
+                <option value="barbershop">حلاقة رجالية</option>
+                <option value="spa">سبا / حمام</option>
+                <option value="fitness">قاعة رياضية</option>
+            </optgroup>
+
+            <optgroup label="السيارات والنقل">
+                <option value="car_dealer">معرض سيارات</option>
+                <option value="car_wash">غسيل سيارات</option>
+                <option value="car_maintenance">صيانة سيارات</option>
+                <option value="spare_parts">قطع غيار سيارات</option>
+                <option value="transport">شركة نقل</option>
+                <option value="logistics">لوجستيك / شحن</option>
+                <option value="delivery">خدمة توصيل</option>
+            </optgroup>
+
+            <optgroup label="الخدمات والاستشارات">
+                <option value="real_estate">وكالة عقارية</option>
+                <option value="hotel">فندق</option>
+                <option value="travel_agency">وكالة أسفار</option>
+                <option value="bank">بنك / مؤسسة مالية</option>
+                <option value="insurance">شركة تأمين</option>
+                <option value="law_firm">مكتب محاماة</option>
+                <option value="accounting">مكتب محاسبة</option>
+                <option value="consulting">استشارات أعمال</option>
+                <option value="marketing">وكالة تسويق إلكتروني</option>
+                <option value="advertising">وكالة إشهار / بلاكو بلاتر</option>
+                <option value="printing">مطبعة</option>
+                <option value="photography">استوديو تصوير</option>
+                <option value="videography">إنتاج فيديو</option>
+                <option value="it_services">خدمات تكنولوجيا المعلومات</option>
+                <option value="software">شركة برمجيات</option>
+                <option value="web_design">تصميم وتطوير مواقع</option>
+                <option value="cybersecurity">أمن سيبراني</option>
+                <option value="translation">مكتب ترجمة</option>
+            </optgroup>
+
+            <optgroup label="الصناعة والبناء">
+                <option value="factory">مصنع</option>
+                <option value="construction">شركة مقاولات</option>
+                <option value="decoration">ديكور وتشطيبات</option>
+                <option value="carpentry">نجارة</option>
+                <option value="blacksmith">حدادة</option>
+                <option value="aluminum">ألمنيوم وزجاج</option>
+                <option value="marble">رخام وجرانيت</option>
+                <option value="electrical">كهرباء</option>
+                <option value="plumbing">سباكة</option>
+                <option value="painting">دهان</option>
+                <option value="building_materials">مواد بناء</option>
+            </optgroup>
+
+            <optgroup label="التعليم والثقافة">
+                <option value="school">مدرسة خاصة</option>
+                <option value="kindergarten">روضة أطفال</option>
+                <option value="training_center">مركز تكوين مهني</option>
+                <option value="language_school">معهد لغات</option>
+                <option value="tutoring">دروس دعم</option>
+                <option value="library">مكتبة</option>
+            </optgroup>
+
+            <optgroup label="الإعلام والترفيه">
+                <option value="tv_channel">قناة تلفزيونية</option>
+                <option value="radio">إذاعة</option>
+                <option value="magazine">مجلة / صحيفة</option>
+                <option value="event_planning">تنظيم مناسبات</option>
+                <option value="cinema">سينما / مسرح</option>
+                <option value="gaming">مركز ألعاب إلكترونية</option>
+                <option value="travel_tourism">سياحة وترفيه</option>
+            </optgroup>
+
+            <optgroup label="أخرى">
+                <option value="other">مجال آخر (اكتب مجالك هنا)</option>
+            </optgroup>
+        </select>
+
+        <!-- خانة تظهر فقط عند اختيار "أخرى" -->
+        <input type="text" name="custom_sector" id="custom_sector" placeholder="اكتب مجالك هنا..." style="display: none;">
+
+        <input type="text" name="contact_name" placeholder="اسم المسؤول" required>
+        <input type="tel" name="phone" placeholder="رقم الهاتف" required>
+        <input type="email" name="email" placeholder="البريد الإلكتروني" required>
+        <input type="text" name="address" placeholder="العنوان">
+        <input type="url" name="website" placeholder="الموقع الإلكتروني (اختياري)">
+        
+        <textarea name="partnership_type" placeholder="نوع الشراكة المطلوبة" required></textarea>
+        <textarea name="motivation" placeholder="لماذا تريد الشراكة؟"></textarea>
+
+        <button type="submit" class="btn-primary">إرسال طلب الشراكة</button>
+    </form>
+</section>
+
+<!-- JavaScript لإظهار خانة الكتابة عند اختيار "أخرى" -->
+<script>
+    document.getElementById('sector_select').addEventListener('change', function() {
+        var customInput = document.getElementById('custom_sector');
+        if (this.value === 'other') {
+            customInput.style.display = 'block';
+            customInput.required = true; // جعل الحقل إجبارياً
+        } else {
+            customInput.style.display = 'none';
+            customInput.required = false;
+            customInput.value = ''; // مسح القيمة إذا تم تغيير الاختيار
+        }
+    });
+</script>
+{% endblock %}

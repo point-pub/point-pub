@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="product-detail-section">
+    <div class="product-detail-container">
+        <div class="product-image">
+            <img src="{{ url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/600x600/0a1929/f5c842?text=POINT+PUB' }}" alt="{{ product.name }}">
+        </div>
+
+        <div class="product-info">
+            <h1>{{ product.name }}</h1>
+
+            {% if avg_rating %}
+            <div class="product-rating">
+                ⭐ {{ "%.1f"|format(avg_rating) }} / 5
+            </div>
+            {% endif %}
+
+            <p class="product-price">{{ product.price }} دج</p>
+
+            {% if product.old_price %}
+            <p class="product-old-price"><del>{{ product.old_price }} دج</del></p>
+            {% endif %}
+
+            <p class="product-description">{{ product.description }}</p>
+
+            <a href="{{ url_for('add_to_cart', id=product.id) }}" class="btn-primary">🛒 أضف إلى السلة</a>
+        </div>
+    </div>
+
+    <!-- ===== التقييمات ===== -->
+    <div class="product-reviews">
+        <h2>تقييمات العملاء</h2>
+
+        {% for review in reviews %}
+        <div class="review-item">
+            <h4>{{ review.customer_name }}</h4>
+            <p class="review-rating">{{ '⭐' * review.rating }}</p>
+            <p>{{ review.comment }}</p>
+            <small>{{ review.created_at.strftime('%Y-%m-%d') }}</small>
+        </div>
+        {% else %}
+        <p>لا توجد تقييمات بعد. كن أول من يقيّم!</p>
+        {% endfor %}
+
+        <form method="POST" action="{{ url_for('add_review', id=product.id) }}" class="review-form">
+            <h3>أضف تقييمك</h3>
+            <input type="text" name="name" placeholder="اسمك" required>
+            <select name="rating" required>
+                <option value="">اختر التقييم</option>
+                <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
+                <option value="4">⭐⭐⭐⭐ جيد جداً</option>
+                <option value="3">⭐⭐⭐ جيد</option>
+                <option value="2">⭐⭐ مقبول</option>
+                <option value="1">⭐ ضعيف</option>
+            </select>
+            <textarea name="comment" placeholder="ملاحظاتك..."></textarea>
+            <button type="submit" class="btn-primary">إرسال التقييم</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

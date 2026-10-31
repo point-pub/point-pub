@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}تم استلام الطلب - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="order-success-section">
+    <h1>تم استلام طلبك بنجاح</h1>
+    <p>رقم الطلب: <strong>#{{ order.id }}</strong></p>
+    <p>المجموع: <strong>{{ order.total }} دج</strong></p>
+    <p>سنتواصل معك قريباً لتأكيد الطلب.</p>
+
+    {% set message = 'طلب جديد رقم #' + order.id|string + '%0A' %}
+    {% set message = message + '----------%0A' %}
+    {% set message = message + 'الاسم الكامل: ' + order.customer_name + '%0A' %}
+    {% set message = message + 'الهاتف: ' + order.customer_phone + '%0A' %}
+    {% set message = message + 'المدينة: ' + (order.customer_city or '') + '%0A' %}
+    {% set message = message + 'العنوان: ' + order.customer_address + '%0A' %}
+    {% set message = message + '----------%0A' %}
+    {% set message = message + 'المنتجات:%0A' %}
+    {% for item in order.items %}
+        {% set message = message + '- ' + item.product_name + ' (' + item.quantity|string + ' × ' + item.price|string + ' دج)%0A' %}
+    {% endfor %}
+    {% set message = message + '----------%0A' %}
+    {% set message = message + 'المجموع: ' + order.total|string + ' دج%0A' %}
+
+    <a href="https://wa.me/213793432883?text={{ message }}" class="btn-whatsapp" target="_blank">
+        تأكيد الطلب عبر WhatsApp
+    </a>
+
+    <a href="{{ url_for('home') }}" class="btn-outline" style="margin-top: 1rem;">
+        العودة للرئيسية
+    </a>
+</section>
+{% endblock %}

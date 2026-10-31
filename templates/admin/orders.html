@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الطلبات{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إدارة الطلبات</h1>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم الكامل</th>
+                <th>الهاتف</th>
+                <th>المدينة</th>
+                <th>المجموع</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.customer_phone }}</td>
+                <td>{{ order.customer_city }}</td>
+                <td>{{ order.total }} دج</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                <td><a href="/admin/order/{{ order.id }}" class="btn-view">عرض</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;">لا توجد طلبات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

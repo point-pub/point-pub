@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الشركاء{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إدارة الشركاء</h1>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الشركة</th>
+                <th>المجال</th>
+                <th>المسؤول</th>
+                <th>الهاتف</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for partner in partners %}
+            <tr>
+                <td>{{ partner.id }}</td>
+                <td>{{ partner.company_name }}</td>
+                <td>{{ partner.sector }}</td>
+                <td>{{ partner.contact_name }}</td>
+                <td>{{ partner.phone }}</td>
+                <td>
+                    {% if partner.status == 'pending' %}قيد الدراسة
+                    {% elif partner.status == 'approved' %}مقبول
+                    {% else %}مرفوض{% endif %}
+                </td>
+                <td>
+                    {% if partner.status == 'pending' %}
+                    <a href="/admin/partner/{{ partner.id }}/approve" class="btn-view">موافقة</a>
+                    <a href="/admin/partner/{{ partner.id }}/reject" class="btn-delete">رفض</a>
+                    {% else %}
+                    <a href="/admin/partner/{{ partner.id }}" class="btn-view">عرض</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;">لا يوجد شركاء</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

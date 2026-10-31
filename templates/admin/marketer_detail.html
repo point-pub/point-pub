@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل المسوق - {{ marketer.full_name }}{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>تفاصيل المسوق</h1>
+
+    <div style="background: var(--dark-card); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
+        <h2>معلومات المسوق</h2>
+        <p><strong>الكود:</strong> {{ marketer.code }}</p>
+        <p><strong>الاسم الكامل:</strong> {{ marketer.full_name }}</p>
+        <p><strong>الهاتف:</strong> {{ marketer.phone }}</p>
+        <p><strong>البريد الإلكتروني:</strong> {{ marketer.email }}</p>
+        <p><strong>بريدي موب:</strong> {{ marketer.baridimob }}</p>
+        <p><strong>الولاية:</strong> {{ marketer.state }}</p>
+        <p><strong>الخبرة:</strong> {{ marketer.experience or 'غير محدد' }}</p>
+        <p><strong>رابط التواصل:</strong> {{ marketer.social_link or 'غير محدد' }}</p>
+        <p><strong>الدافع:</strong> {{ marketer.motivation or 'غير محدد' }}</p>
+        <p><strong>الحالة:</strong>
+            {% if marketer.status == 'pending' %}قيد المراجعة
+            {% elif marketer.status == 'approved' %}مفعّل
+            {% else %}مرفوض{% endif %}
+        </p>
+        <p><strong>تاريخ التسجيل:</strong> {{ marketer.created_at.strftime('%Y-%m-%d') }}</p>
+    </div>
+
+    {% if marketer.status == 'pending' %}
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <a href="/admin/marketer/{{ marketer.id }}/approve" class="btn-view">موافقة</a>
+        <a href="/admin/marketer/{{ marketer.id }}/reject" class="btn-delete">رفض</a>
+    </div>
+    {% endif %}
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ marketer.total_sales }} دج</h3>
+            <p>إجمالي المبيعات</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ marketer.total_commission }} دج</h3>
+            <p>إجمالي العمولة</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ marketer.total_paid }} دج</h3>
+            <p>المدفوع</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ marketer.total_commission - marketer.total_paid }} دج</h3>
+            <p>المتبقي</p>
+        </div>
+    </div>
+
+    <h2>سجل المبيعات</h2>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الطلب</th>
+                <th>المبلغ</th>
+                <th>العمولة</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in marketer.sales %}
+            <tr>
+                <td>{{ sale.id }}</td>
+                <td>#{{ sale.order_id }}</td>
+                <td>{{ sale.amount }} دج</td>
+                <td>{{ sale.commission }} دج</td>
+                <td>{{ "مدفوع" if sale.is_paid else "غير مدفوع" }}</td>
+                <td>{{ sale.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;">لا توجد مبيعات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>تسجيل دفعة</h2>
+    <form method="POST" action="/admin/marketer/{{ marketer.id }}/pay" class="checkout-form" style="max-width: 500px;">
+        <input type="number" name="amount" placeholder="المبلغ" step="0.01" required>
+        <input type="text" name="note" placeholder="ملاحظة (اختياري)">
+        <button type="submit" class="btn-primary">تسجيل الدفعة</button>
+    </form>
+
+    <h2>سجل الدفعات</h2>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>المبلغ</th>
+                <th>ملاحظة</th>
+                <th>التاريخ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in marketer.payments %}
+            <tr>
+                <td>{{ payment.id }}</td>
+                <td>{{ payment.amount }} دج</td>
+                <td>{{ payment.note or '-' }}</td>
+                <td>{{ payment.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;">لا توجد دفعات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if marketer.status == 'approved' %}
+    <h2>إرسال رابط Telegram للمسوق</h2>
+
+    {% set message = 'مرحباً ' + marketer.full_name + '،%0A' %}
+    {% set message = message + 'تم قبول طلبك في برنامج مسوقي POINT PUB.%0A' %}
+    {% set message = message + 'كودك الخاص: ' + marketer.code + '%0A' %}
+    {% set message = message + '--------%0A' %}
+    {% set message = message + 'انضم إلى مجموعة المسوقين على Telegram:%0A' %}
+    {% set message = message + 'https://t.me/pointpubdz%0A' %}
+    {% set message = message + '--------%0A' %}
+    {% set message = message + 'مرحباً بك في فريقنا!' %}
+
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+        <a href="https://wa.me/213{{ marketer.phone[1:] }}?text={{ message }}" class="btn-whatsapp" target="_blank">
+            إرسال عبر WhatsApp
+        </a>
+        <a href="mailto:{{ marketer.email }}?subject=تم قبول طلبك في برنامج المسوقين&body={{ message }}" class="btn-email">
+            إرسال عبر البريد
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

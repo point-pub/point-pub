@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل الدخول{% endblock %}
+
+{% block content %}
+<section class="login-section">
+    <div class="login-logo-wrapper">
+        <img src="{{ url_for('static', filename='images/pointpub-logo.png') }}" alt="POINT PUB" class="login-logo">
+    </div>
+    <h1>تسجيل الدخول</h1>
+    <form method="POST" class="login-form">
+        <input type="text" name="username" placeholder="اسم المستخدم" required>
+        <input type="password" name="password" placeholder="كلمة المرور" required>
+        <button type="submit" class="btn-primary">دخول</button>
+    </form>
+</section>
+{% endblock %}

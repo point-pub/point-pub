@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}الفيديو والتصوير - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="service-page">
+    <h1>الفيديو والتصوير</h1>
+    <p class="subtitle">فيديوهات احترافية وتصوير للمنتجات</p>
+
+    <div class="service-gallery">
+        {% if images %}
+            {% for image in images %}
+                <a href="{{ url_for('static', filename='images/services/media/' + image) }}" class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/services/media/' + image) }}" alt="صورة من أعمالنا" loading="lazy">
+                </a>
+            {% endfor %}
+        {% else %}
+            <p style="text-align:center; width:100%; color:var(--gray);">لا توجد صور مضافة حالياً.</p>
+        {% endif %}
+    </div>
+
+    <div class="service-cta">
+        <a href="https://wa.me/213793432883?text=أريد عرض سعر للفيديو والتصوير" class="btn-whatsapp" target="_blank">
+            طلب السعر عبر واتساب
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة التقييمات{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إدارة التقييمات</h1>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>المنتج</th>
+                <th>الاسم</th>
+                <th>التقييم</th>
+                <th>التعليق</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+            <tr>
+                <td>{{ review.id }}</td>
+                <td>{{ review.product.name }}</td>
+                <td>{{ review.customer_name }}</td>
+                <td>{{ '⭐' * review.rating }}</td>
+                <td>{{ review.comment[:50] }}...</td>
+                <td>{{ "مقبول" if review.is_approved else "قيد المراجعة" }}</td>
+                <td>
+                    <a href="/admin/review/{{ review.id }}/approve" class="btn-view">موافقة</a>
+                    <a href="/admin/review/{{ review.id }}/delete" class="btn-delete" onclick="return confirm('هل أنت متأكد؟')">حذف</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;">لا توجد تقييمات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

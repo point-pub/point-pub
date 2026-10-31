@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة المنتجات{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إدارة المنتجات</h1>
+
+    <a href="/admin/product/add" class="btn-primary">إضافة منتج جديد</a>
+
+    <table class="admin-table" style="margin-top: 2rem;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>السعر</th>
+                <th>المخزون</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.id }}</td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.price }} دج</td>
+                <td>{{ product.stock }}</td>
+                <td>{{ "نشط" if product.is_active else "معطل" }}</td>
+                <td>
+                    <a href="/admin/product/edit/{{ product.id }}" class="btn-view">تعديل</a>
+                    <a href="/admin/product/delete/{{ product.id }}" class="btn-delete" onclick="return confirm('هل أنت متأكد؟')">حذف</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;">لا توجد منتجات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}المسوقون - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="marketers-section">
+    <h1>برنامج المسوقين</h1>
+    <p class="subtitle">اربح 15% على كل عملية بيع</p>
+
+    {% if marketer %}
+        {# ===== عرض حالة الطلب ===== #}
+        <div class="marketer-status">
+            <h2>حالة طلبك</h2>
+
+            {% if marketer.status == 'pending' %}
+                <div class="status-pending">
+                    <h3>طلبك قيد المراجعة</h3>
+                    <p>تم استلام طلبك بنجاح وسيتم مراجعته من قبل فريق POINT PUB.</p>
+                    <p>سيتم التواصل معك بعد الموافقة على طلبك.</p>
+                    <p><strong>كود التسجيل المؤقت:</strong> {{ marketer.code }}</p>
+                    <p><strong>البريد الإلكتروني:</strong> {{ marketer.email }}</p>
+                </div>
+            {% elif marketer.status == 'approved' %}
+                <div class="status-approved">
+                    <h3>تم قبول طلبك</h3>
+                    <p>مرحباً {{ marketer.full_name }}، يسعدنا إخبارك بقبول طلبك في برنامج مسوقي POINT PUB.</p>
+                    <p><strong>كودك الخاص:</strong> <span class="marketer-code">{{ marketer.code }}</span></p>
+                    <p>استخدم هذا الكود في كل عملية بيع لتحصل على عمولتك (15%).</p>
+
+                    <div style="margin-top: 2rem;">
+                        <a href="https://t.me/pointpubdz" class="btn-telegram" target="_blank">
+                            انضم إلى مجموعة المسوقين على Telegram
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="status-rejected">
+                    <h3>تم رفض طلبك</h3>
+                    <p>نأسف، لم يتم قبول طلبك في برنامج المسوقين.</p>
+                    <p>يمكنك التواصل معنا للمزيد من المعلومات.</p>
+                </div>
+            {% endif %}
+        </div>
+
+    {% else %}
+        {# ===== نموذج التسجيل ===== #}
+        {% if marketers_enabled %}
+        <div class="marketers-info">
+            <h2>كيف يعمل البرنامج؟</h2>
+            <ol>
+                <li>سجل في البرنامج</li>
+                <li>انتظر الموافقة</li>
+                <li>احصل على كودك الخاص</li>
+                <li>ابدأ البيع</li>
+            </ol>
+
+            <h2>مميزات البرنامج</h2>
+            <ul>
+                <li>عمولة 15% على كل بيع</li>
+                <li>دفع عبر بريدي موب</li>
+                <li>دعم مستمر</li>
+                <li>منتجات متنوعة</li>
+            </ul>
+        </div>
+
+        <form method="POST" class="marketers-form">
+            <h2>التسجيل في البرنامج</h2>
+
+            <input type="text" name="full_name" placeholder="الاسم الكامل" required>
+            <input type="tel" name="phone" placeholder="رقم الهاتف" required>
+            <input type="email" name="email" placeholder="البريد الإلكتروني" required>
+            <input type="text" name="baridimob" placeholder="حساب بريدي موب" required>
+            <input type="text" name="state" placeholder="الولاية" required>
+            <select name="experience">
+                <option value="">الخبرة في البيع</option>
+                <option value="yes">نعم، لدي خبرة</option>
+                <option value="no">لا، ليس لدي خبرة</option>
+            </select>
+            <input type="url" name="social_link" placeholder="رابط حسابك (اختياري)">
+            <textarea name="motivation" placeholder="لماذا تريد الانضمام؟"></textarea>
+
+            <button type="submit" class="btn-primary">إرسال الطلب</button>
+        </form>
+
+        {% else %}
+        <div class="closed-message">
+            <h2>التسجيل مغلق حالياً</h2>
+            <p>سيتم فتح باب التسجيل للمسوقين قريباً بعد إطلاق الموقع.</p>
+        </div>
+        {% endif %}
+    {% endif %}
+</section>
+{% endblock %}

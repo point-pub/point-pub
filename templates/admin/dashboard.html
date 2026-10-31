@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>لوحة التحكم</h1>
+
+    <div class="stats-grid">
+        <a href="/admin/products" class="stat-card">
+            <h3>{{ products_count }}</h3>
+            <p>المنتجات</p>
+        </a>
+        <a href="/admin/orders" class="stat-card">
+            <h3>{{ orders_count }}</h3>
+            <p>الطلبات</p>
+        </a>
+        <a href="/admin/marketers" class="stat-card">
+            <h3>{{ marketers_count }}</h3>
+            <p>المسوقون</p>
+        </a>
+        <a href="/admin/partners" class="stat-card">
+            <h3>{{ partners_count }}</h3>
+            <p>الشركاء</p>
+        </a>
+        <a href="/admin/reviews" class="stat-card">
+            <h3>{{ reviews_count }}</h3>
+            <p>التقييمات</p>
+        </a>
+        <a href="/admin/coupons" class="stat-card">
+            <h3>{{ coupons_count }}</h3>
+            <p>الكوبونات</p>
+        </a>
+    </div>
+
+    <h2>آخر الطلبات</h2>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم الكامل</th>
+                <th>الهاتف</th>
+                <th>المجموع</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in recent_orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.customer_phone }}</td>
+                <td>{{ order.total }} دج</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                <td><a href="/admin/order/{{ order.id }}" class="btn-view">عرض</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;">لا توجد طلبات بعد</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

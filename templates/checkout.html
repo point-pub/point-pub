@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}إتمام الطلب - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="checkout-section">
+    <h1>إتمام الطلب</h1>
+
+    <form method="POST" class="checkout-form">
+        <h2>معلومات التوصيل</h2>
+        <input type="text" name="name" placeholder="الاسم الكامل" required>
+        <input type="tel" name="phone" placeholder="رقم الهاتف" required>
+        <input type="text" name="city" placeholder="الولاية / المدينة" required>
+        <textarea name="address" placeholder="العنوان الكامل" required></textarea>
+        <textarea name="notes" placeholder="ملاحظات إضافية (اختياري)"></textarea>
+
+        <h2>الكوبون وكود المسوق</h2>
+        <input type="text" name="coupon" placeholder="كود الخصم (اختياري)">
+        <input type="text" name="marketer_code" placeholder="كود المسوق (اختياري)">
+
+        <button type="submit" class="btn-primary">إرسال الطلب</button>
+        <p class="form-note">الدفع عند الاستلام</p>
+    </form>
+</section>
+{% endblock %}

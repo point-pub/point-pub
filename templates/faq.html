@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}الأسئلة الشائعة - POINT PUB{% endblock %}
+
+{% block content %}
+<section class="faq-section">
+    <h1>الأسئلة الشائعة</h1>
+    <p class="section-subtitle">أجوبة على أكثر الأسئلة شيوعاً</p>
+
+    <div class="faq-grid">
+        {% for faq in faqs %}
+        <div class="faq-item">
+            <h3>{{ faq.question }}</h3>
+            <p>{{ faq.answer }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

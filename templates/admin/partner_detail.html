@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل الشريك - {{ partner.company_name }}{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>تفاصيل الشريك</h1>
+
+    <div style="background: var(--dark-card); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
+        <h2>معلومات الشركة</h2>
+        <p><strong>اسم الشركة:</strong> {{ partner.company_name }}</p>
+        <p><strong>المجال:</strong> {{ partner.sector }}</p>
+        <p><strong>المسؤول:</strong> {{ partner.contact_name }}</p>
+        <p><strong>الهاتف:</strong> {{ partner.phone }}</p>
+        <p><strong>البريد الإلكتروني:</strong> {{ partner.email }}</p>
+        <p><strong>العنوان:</strong> {{ partner.address or 'غير محدد' }}</p>
+        <p><strong>الموقع الإلكتروني:</strong> {{ partner.website or 'غير محدد' }}</p>
+        <p><strong>نوع الشراكة:</strong> {{ partner.partnership_type }}</p>
+        <p><strong>الدافع:</strong> {{ partner.motivation or 'غير محدد' }}</p>
+        <p><strong>الحالة:</strong>
+            {% if partner.status == 'pending' %}قيد الدراسة
+            {% elif partner.status == 'approved' %}مقبول
+            {% else %}مرفوض{% endif %}
+        </p>
+        <p><strong>تاريخ الطلب:</strong> {{ partner.created_at.strftime('%Y-%m-%d') }}</p>
+    </div>
+
+    {% if partner.status == 'pending' %}
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <a href="/admin/partner/{{ partner.id }}/approve" class="btn-view">موافقة</a>
+        <a href="/admin/partner/{{ partner.id }}/reject" class="btn-delete">رفض</a>
+    </div>
+    {% endif %}
+
+    {% if partner.status == 'approved' %}
+    <h2>إرسال رد للشريك</h2>
+
+    {% set message = 'مرحباً ' + partner.contact_name + '،%0A' %}
+    {% set message = message + 'يسعدنا إبلاغكم بقبول طلب الشراكة مع ' + partner.company_name + '.%0A' %}
+    {% set message = message + '--------%0A' %}
+    {% set message = message + 'سيتواصل معكم فريق POINT PUB قريباً لمناقشة تفاصيل الشراكة.%0A' %}
+    {% set message = message + 'شكراً لثقتكم بنا.' %}
+
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+        <a href="https://wa.me/213{{ partner.phone[1:] }}?text={{ message }}" class="btn-whatsapp" target="_blank">
+            إرسال عبر WhatsApp
+        </a>
+        <a href="mailto:{{ partner.email }}?subject=قبول طلب الشراكة&body={{ message }}" class="btn-email">
+            إرسال عبر البريد
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

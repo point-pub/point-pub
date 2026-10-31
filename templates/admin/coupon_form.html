@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}إضافة كوبون{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إضافة كوبون جديد</h1>
+
+    <form method="POST" class="checkout-form" style="max-width: 700px;">
+        <input type="text" name="code" placeholder="كود الخصم (مثال: PROMO10)" required>
+        <input type="number" name="discount_percent" placeholder="نسبة الخصم %" min="1" max="100" step="1" required>
+
+        <label style="color: var(--gold); margin-top: 1rem;">اختر المنتج (اختياري):</label>
+        <select name="product_id" style="padding: 14px; background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px; color: var(--white); font-family: inherit; font-size: 1rem;">
+            <option value="">كل المنتجات (بدون تحديد)</option>
+            {% for product in products %}
+            <option value="{{ product.id }}">{{ product.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label style="color: var(--gold); margin-top: 1rem;">نوع الكوبون:</label>
+        <select name="coupon_type" id="coupon_type" onchange="toggleCouponFields()" style="padding: 14px; background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px; color: var(--white); font-family: inherit; font-size: 1rem;">
+            <option value="quantity">كوبون ذو عدد معين</option>
+            <option value="time">كوبون ذو مدة زمنية</option>
+        </select>
+
+        <div id="quantity_fields">
+            <label style="color: var(--gold); margin-top: 1rem;">عدد الاستخدامات الأقصى:</label>
+            <input type="number" name="max_uses" placeholder="مثال: 100" min="1">
+        </div>
+
+        <div id="time_fields" style="display: none;">
+            <label style="color: var(--gold); margin-top: 1rem;">تاريخ البداية:</label>
+            <input type="date" name="start_date">
+
+            <label style="color: var(--gold); margin-top: 1rem;">تاريخ النهاية:</label>
+            <input type="date" name="end_date">
+        </div>
+
+        <button type="submit" class="btn-primary">حفظ</button>
+        <a href="/admin/coupons" class="btn-outline">إلغاء</a>
+    </form>
+</section>
+
+<script>
+function toggleCouponFields() {
+    const type = document.getElementById('coupon_type').value;
+    const quantityFields = document.getElementById('quantity_fields');
+    const timeFields = document.getElementById('time_fields');
+
+    if (type === 'quantity') {
+        quantityFields.style.display = 'block';
+        timeFields.style.display = 'none';
+    } else {
+        quantityFields.style.display = 'none';
+        timeFields.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

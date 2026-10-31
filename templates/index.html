@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}POINT PUB - الإشهار الذي يُرى{% endblock %}
+
+{% block content %}
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-logo-wrapper">
+            <img src="{{ url_for('static', filename='images/pointpub-logo.png') }}" alt="POINT PUB" class="hero-logo">
+        </div>
+        <h1 class="hero-title">POINT PUB</h1>
+        <h2 class="hero-subtitle">النقطة للإشهار</h2>
+        <p class="hero-tagline">الإشهار الذي يُرى</p>
+        <p class="hero-description">
+            من الفكرة إلى الواقع، ومن التصميم إلى الإشهار.<br>
+            نُحوّل أفكارك إلى واقع مرئي.
+        </p>
+        <a href="{{ url_for('shop') }}" class="btn-primary">تسوق الآن</a>
+    </div>
+</section>
+
+<!-- ===== الخدمات ===== -->
+<section class="services">
+    <h2 class="section-title">خدماتنا</h2>
+    <p class="section-subtitle">اكتشف خدماتنا الاحترافية</p>
+    <div class="services-grid">
+
+        <a href="/services/billboards" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/billboards.jpg') }}" alt="اللافتات الإشهارية" class="service-image" loading="lazy">
+            <h3>اللافتات الإشهارية</h3>
+            <p>لافتات خارجية وداخلية بجودة عالية</p>
+        </a>
+
+        <a href="/services/media" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/media.jpg') }}" alt="الفيديو والتصوير" class="service-image" loading="lazy">
+            <h3>الفيديو والتصوير</h3>
+            <p>فيديوهات احترافية وتصوير للمنتجات</p>
+        </a>
+
+        <a href="/services/packaging" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/packaging.jpg') }}" alt="التغليف" class="service-image" loading="lazy">
+            <h3>التغليف</h3>
+            <p>تغليف احترافي للسيارات، الحافلات، والواجهات</p>
+        </a>
+
+        <a href="/services/printing" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/printing.jpg') }}" alt="الطباعة" class="service-image" loading="lazy">
+            <h3>الطباعة</h3>
+            <p>طباعة حرارية على الملابس والبانرات</p>
+        </a>
+
+        <a href="/services/design" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/design.jpg') }}" alt="التصميم والغرافيك" class="service-image" loading="lazy">
+            <h3>التصميم والغرافيك</h3>
+            <p>شعارات، منشورات، وتصاميم مميزة</p>
+        </a>
+
+        <a href="/services/branding" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/branding.jpg') }}" alt="الهوية البصرية" class="service-image" loading="lazy">
+            <h3>الهوية البصرية</h3>
+            <p>هويات متكاملة تعكس شخصية علامتك التجارية</p>
+        </a>
+
+        <a href="/services/decoration" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/decoration.jpg') }}" alt="الديكور والتهيئة" class="service-image" loading="lazy">
+            <h3>الديكور والتهيئة</h3>
+            <p>تهيئة المحلات بأسلوب عصري</p>
+        </a>
+
+        <a href="/services/websites" class="service-card">
+            <img src="{{ url_for('static', filename='images/services/websites.jpg') }}" alt="صناعة المواقع" class="service-image" loading="lazy">
+            <h3>صناعة المواقع</h3>
+            <p>تصميم وبرمجة مواقع احترافية</p>
+        </a>
+
+    </div>
+</section>
+
+<!-- ===== لماذا POINT PUB؟ ===== -->
+<section class="why-us">
+    <h2 class="section-title">لماذا POINT PUB؟</h2>
+    <p class="section-text">
+        أنشئت POINT PUB لتكون أكثر من مجرد وكالة إشهارية. نحن نجمع بين الإبداع،
+        التكنولوجيا، والخبرة لنقدم لعملائنا حلولاً بصرية متكاملة.
+    </p>
+</section>
+
+<!-- ===== معرض أعمالنا ===== -->
+<section class="portfolio-section" style="background: var(--dark-bg);">
+    <h2 class="section-title">معرض أعمالنا</h2>
+    <p class="section-subtitle">شاهد أفضل ما أنجزناه في POINT PUB</p>
+    
+    <div class="service-gallery">
+        {% if gallery_images %}
+            {% for image in gallery_images %}
+                <a href="{{ url_for('static', filename='images/gallery/' + image) }}" class="gallery-item">
+                    <img src="{{ url_for('static', filename='images/gallery/' + image) }}" alt="عمل من أعمالنا" loading="lazy">
+                </a>
+            {% endfor %}
+        {% else %}
+            <p style="text-align:center; width:100%; color:var(--gray);">سيتم إضافة صور أعمالنا قريباً.</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== مختارات من متجرنا ===== -->
+<section class="featured-products">
+    <h2 class="section-title">مختارات من متجرنا</h2>
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <img src="{{ url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/300x300/0a1929/f5c842?text=POINT+PUB' }}" alt="{{ product.name }}" loading="lazy">
+            <h3>{{ product.name }}</h3>
+            <p class="product-price">{{ product.price }} دج</p>
+            <a href="{{ url_for('product_detail', id=product.id) }}" class="btn-outline">التفاصيل</a>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('shop') }}" class="btn-outline">عرض جميع المنتجات</a>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+    <h2>كل فكرة كبيرة تبدأ بنقطة</h2>
+    <p>اختر منتجك، أضفه إلى السلة، واترك الباقي علينا</p>
+    <a href="{{ url_for('shop') }}" class="btn-primary">تسوق الآن</a>
+</section>
+
+{% endblock %}

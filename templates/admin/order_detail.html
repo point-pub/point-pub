@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل الطلب #{{ order.id }}{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>تفاصيل الطلب #{{ order.id }}</h1>
+
+    <div style="background: var(--dark-card); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
+        <h2>معلومات الزبون</h2>
+        <p><strong>الاسم الكامل:</strong> {{ order.customer_name }}</p>
+        <p><strong>الهاتف:</strong> {{ order.customer_phone }}</p>
+        <p><strong>المدينة:</strong> {{ order.customer_city }}</p>
+        <p><strong>العنوان:</strong> {{ order.customer_address }}</p>
+        <p><strong>ملاحظات:</strong> {{ order.notes or 'لا توجد' }}</p>
+        <p><strong>كود المسوق:</strong> {{ order.marketer_code or 'لا يوجد' }}</p>
+    </div>
+
+    <h2>المنتجات</h2>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>المنتج</th>
+                <th>السعر</th>
+                <th>الكمية</th>
+                <th>المجموع</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.price }} دج</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.price * item.quantity }} دج</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 2rem; text-align: center;">
+        <h2>المجموع الكلي: {{ order.total }} دج</h2>
+        <p>الخصم: {{ order.discount }} دج</p>
+    </div>
+
+    <h2>تغيير حالة الطلب</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="/admin/order/status/{{ order.id }}/جديد" class="btn-outline">جديد</a>
+        <a href="/admin/order/status/{{ order.id }}/قيد المعالجة" class="btn-outline">قيد المعالجة</a>
+        <a href="/admin/order/status/{{ order.id }}/تم الإرسال" class="btn-outline">تم الإرسال</a>
+        <a href="/admin/order/status/{{ order.id }}/تم التسليم" class="btn-outline">تم التسليم</a>
+        <a href="/admin/order/status/{{ order.id }}/ملغى" class="btn-outline">ملغى</a>
+    </div>
+
+    <h2>إرسال إلى WhatsApp</h2>
+
+    {% set message = 'طلب جديد رقم #' + order.id|string + '%0A' %}
+    {% set message = message + '----------%0A' %}
+    {% set message = message + 'الاسم الكامل: ' + order.customer_name + '%0A' %}
+    {% set message = message + 'الهاتف: ' + order.customer_phone + '%0A' %}
+    {% set message = message + 'المدينة: ' + (order.customer_city or '') + '%0A' %}
+    {% set message = message + 'العنوان: ' + order.customer_address + '%0A' %}
+    {% set message = message + '----------%0A' %}
+    {% set message = message + 'المنتجات:%0A' %}
+    {% for item in items %}
+        {% set message = message + '- ' + item.product_name + ' (' + item.quantity|string + ' × ' + item.price|string + ' دج)%0A' %}
+    {% endfor %}
+    {% set message = message + '----------%0A' %}
+    {% set message = message + 'المجموع: ' + order.total|string + ' دج%0A' %}
+    {% if order.notes %}
+        {% set message = message + 'ملاحظات: ' + order.notes + '%0A' %}
+    {% endif %}
+
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+        <a href="https://wa.me/213793432883?text={{ message }}" class="btn-whatsapp" target="_blank">
+            إرسال الطلب إلى WhatsApp
+        </a>
+        <a href="https://wa.me/213793432883?text={{ message }}" class="btn-call" target="_blank">
+            إرسال إلى World Express
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الكوبونات{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إدارة الكوبونات</h1>
+
+    <a href="/admin/coupon/add" class="btn-primary">إضافة كوبون جديد</a>
+
+    <table class="admin-table" style="margin-top: 2rem;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الكود</th>
+                <th>الخصم %</th>
+                <th>النوع</th>
+                <th>التفاصيل</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for coupon in coupons %}
+            <tr>
+                <td>{{ coupon.id }}</td>
+                <td>{{ coupon.code }}</td>
+                <td>{{ coupon.discount_percent }}%</td>
+                <td>
+                    {% if coupon.coupon_type == 'time' %}⏰ زمني
+                    {% else %}🔢 عدد محدود{% endif %}
+                </td>
+                <td>
+                    {% if coupon.coupon_type == 'time' %}
+                        من {{ coupon.start_date.strftime('%Y-%m-%d') if coupon.start_date else 'الآن' }}
+                        إلى {{ coupon.end_date.strftime('%Y-%m-%d') if coupon.end_date else 'غير محدد' }}
+                    {% else %}
+                        {{ coupon.used_count }} / {{ coupon.max_uses or '∞' }}
+                    {% endif %}
+                </td>
+                <td>{{ "نشط" if coupon.is_active else "معطل" }}</td>
+                <td>
+                    <a href="/admin/coupon/delete/{{ coupon.id }}" class="btn-delete" onclick="return confirm('هل أنت متأكد؟')">حذف</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;">لا توجد كوبونات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

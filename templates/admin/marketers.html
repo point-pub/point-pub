@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة المسوقين{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>إدارة المسوقين</h1>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الكود</th>
+                <th>الاسم الكامل</th>
+                <th>الهاتف</th>
+                <th>الولاية</th>
+                <th>المبيعات</th>
+                <th>العمولة</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for marketer in marketers %}
+            <tr>
+                <td>{{ marketer.id }}</td>
+                <td>{{ marketer.code }}</td>
+                <td>{{ marketer.full_name }}</td>
+                <td>{{ marketer.phone }}</td>
+                <td>{{ marketer.state }}</td>
+                <td>{{ marketer.total_sales }} دج</td>
+                <td>{{ marketer.total_commission }} دج</td>
+                <td>
+                    {% if marketer.status == 'pending' %}قيد المراجعة
+                    {% elif marketer.status == 'approved' %}مفعّل
+                    {% else %}مرفوض{% endif %}
+                </td>
+                <td>
+                    {% if marketer.status == 'pending' %}
+                    <a href="/admin/marketer/{{ marketer.id }}/approve" class="btn-view">موافقة</a>
+                    <a href="/admin/marketer/{{ marketer.id }}/reject" class="btn-delete">رفض</a>
+                    {% else %}
+                    <a href="/admin/marketer/{{ marketer.id }}" class="btn-view">عرض</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" style="text-align:center;">لا يوجد مسوقون</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
