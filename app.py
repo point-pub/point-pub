@@ -18,10 +18,9 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
 
-# ===== إعداد قاعدة البيانات (PostgreSQL على Render، SQLite محلياً) =====
+# ===== إعداد قاعدة البيانات =====
 database_url = os.getenv('DATABASE_URL')
 if database_url:
-    # إجبار SQLAlchemy على استخدام psycopg2 بدلاً من psycopg (v3)
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql+psycopg2://', 1)
     elif database_url.startswith('postgresql://'):
@@ -46,9 +45,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# ============================================
-# ===== Context Processor (عدد السلة) =====
-# ============================================
 @app.context_processor
 def cart_count():
     cart = session.get('cart', {})
@@ -56,9 +52,6 @@ def cart_count():
     return {'cart_count': count}
 
 
-# ============================================
-# ===== الصفحة الرئيسية =====
-# ============================================
 @app.route('/')
 def home():
     products = Product.query.filter_by(is_active=True).limit(8).all()
@@ -71,9 +64,6 @@ def home():
     return render_template('index.html', products=products, services=services, gallery_images=gallery_images)
 
 
-# ============================================
-# ===== المتجر =====
-# ============================================
 @app.route('/shop')
 def shop():
     search = request.args.get('search', '')
@@ -103,9 +93,6 @@ def shop():
                            max_price=max_price)
 
 
-# ============================================
-# ===== صفحة المنتج =====
-# ============================================
 @app.route('/product/<int:id>')
 def product_detail(id):
     product = Product.query.get_or_404(id)
@@ -132,9 +119,6 @@ def add_review(id):
     return redirect(url_for('product_detail', id=id))
 
 
-# ============================================
-# ===== السلة =====
-# ============================================
 @app.route('/cart')
 def cart():
     cart = session.get('cart', {})
@@ -149,13 +133,14 @@ def cart():
     return render_template('cart.html', items=items, total=total)
 
 
+# ===== هذا هو التعديل المطلوب (التوجيه للسلة) =====
 @app.route('/add-to-cart/<int:id>')
 def add_to_cart(id):
     cart = session.get('cart', {})
     cart[str(id)] = cart.get(str(id), 0) + 1
     session['cart'] = cart
     flash('تمت إضافة المنتج إلى السلة', 'success')
-    return redirect(url_for('shop'))
+    return redirect(url_for('cart'))  # <--- التعديل هنا: ينتقل إلى السلة بدلاً من المتجر
 
 
 @app.route('/remove-from-cart/<int:id>')
@@ -178,9 +163,6 @@ def update_cart(id, qty):
     return redirect(url_for('cart'))
 
 
-# ============================================
-# ===== إتمام الطلب =====
-# ============================================
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     if request.method == 'POST':
@@ -211,14 +193,12 @@ def checkout():
             coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
             if coupon:
                 valid = True
-
                 if coupon.coupon_type == 'time':
                     now = datetime.utcnow()
                     if coupon.start_date and now < coupon.start_date:
                         valid = False
                     if coupon.end_date and now > coupon.end_date:
                         valid = False
-
                 elif coupon.coupon_type == 'quantity':
                     if coupon.max_uses and coupon.used_count >= coupon.max_uses:
                         valid = False
@@ -283,9 +263,6 @@ def order_success(id):
     return render_template('order_success.html', order=order)
 
 
-# ============================================
-# ===== صفحة الشركاء =====
-# ============================================
 @app.route('/partners', methods=['GET', 'POST'])
 def partners():
     if request.method == 'POST':
@@ -329,9 +306,6 @@ def partners():
     return render_template('partners.html')
 
 
-# ============================================
-# ===== صفحة المسوقين =====
-# ============================================
 @app.route('/marketers', methods=['GET', 'POST'])
 def marketers():
     marketers_enabled = os.getenv('MARKETERS_ENABLED', 'false').lower() == 'true'
@@ -396,26 +370,18 @@ def marketers_reset():
     return redirect(url_for('marketers'))
 
 
-# ============================================
-# ===== صفحة الدعم =====
-# ============================================
 @app.route('/support')
 def support_page():
     return render_template('support.html')
 
 
-# ============================================
-# ===== صفحة الأسئلة الشائعة =====
-# ============================================
 @app.route('/faq')
 def faq_page():
     faqs = FAQ.query.filter_by(is_active=True).order_by(FAQ.order).all()
     return render_template('faq.html', faqs=faqs)
 
 
-# ============================================
-# ===== صفحات الخدمات (قراءة تلقائية) =====
-# ============================================
+# ===== صفحات الخدمات =====
 @app.route('/services/billboards')
 def service_billboards():
     folder_path = os.path.join(app.static_folder, 'images/services/billboards')
@@ -473,9 +439,7 @@ def service_websites():
     return render_template('services/websites.html', images=images)
 
 
-# ============================================
 # ===== تسجيل الدخول =====
-# ============================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -496,9 +460,7 @@ def logout():
     return redirect(url_for('home'))
 
 
-# ============================================
-# ===== لوحة التحكم الرئيسية =====
-# ============================================
+# ===== لوحة التحكم =====
 @app.route('/admin')
 @login_required
 def admin_dashboard():
@@ -520,9 +482,7 @@ def admin_dashboard():
                            recent_orders=recent_orders)
 
 
-# ============================================
 # ===== إدارة المنتجات =====
-# ============================================
 @app.route('/admin/products')
 @login_required
 def admin_products():
@@ -600,9 +560,7 @@ def admin_product_delete(id):
     return redirect(url_for('admin_products'))
 
 
-# ============================================
 # ===== إدارة الطلبات =====
-# ============================================
 @app.route('/admin/orders')
 @login_required
 def admin_orders():
@@ -628,9 +586,7 @@ def admin_order_status(id, status):
     return redirect(url_for('admin_order_detail', id=id))
 
 
-# ============================================
 # ===== إدارة المسوقين =====
-# ============================================
 @app.route('/admin/marketers')
 @login_required
 def admin_marketers():
@@ -680,9 +636,7 @@ def admin_marketer_pay(id):
     return redirect(url_for('admin_marketer_detail', id=id))
 
 
-# ============================================
 # ===== إدارة الشركاء =====
-# ============================================
 @app.route('/admin/partners')
 @login_required
 def admin_partners():
@@ -711,9 +665,7 @@ def admin_partner_action(id, action):
     return redirect(url_for('admin_partners'))
 
 
-# ============================================
 # ===== إدارة التقييمات =====
-# ============================================
 @app.route('/admin/reviews')
 @login_required
 def admin_reviews():
@@ -737,9 +689,7 @@ def admin_review_action(id, action):
     return redirect(url_for('admin_reviews'))
 
 
-# ============================================
 # ===== إدارة الكوبونات =====
-# ============================================
 @app.route('/admin/coupons')
 @login_required
 def admin_coupons():
@@ -795,9 +745,7 @@ def admin_coupon_delete(id):
     return redirect(url_for('admin_coupons'))
 
 
-# ============================================
 # ===== إنشاء قاعدة البيانات =====
-# ============================================
 with app.app_context():
     db.create_all()
     admin_username = os.getenv('ADMIN_USERNAME', 'admin')
