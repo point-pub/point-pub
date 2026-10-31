@@ -21,9 +21,11 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
 # ===== إعداد قاعدة البيانات (PostgreSQL على Render، SQLite محلياً) =====
 database_url = os.getenv('DATABASE_URL')
 if database_url:
-    # Render يعطي رابطاً يبدأ بـ postgres://، وSQLAlchemy يحتاج postgresql://
+    # إجبار SQLAlchemy على استخدام psycopg2 بدلاً من psycopg (v3)
     if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        database_url = database_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+    elif database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///point_pub.db'
