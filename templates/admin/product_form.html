@@ -21,7 +21,7 @@
         {% if product and product.image %}
         <div style="margin-top: 1rem;">
             <p style="color: var(--gray);">الصورة الحالية:</p>
-            <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.name }}" style="max-width: 200px; border-radius: 12px;">
+            <img src="{{ product.image if product.image.startswith('http') else url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.name }}" style="max-width: 200px; border-radius: 12px;">
         </div>
         {% endif %}
 

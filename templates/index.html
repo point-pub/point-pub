@@ -111,7 +111,7 @@
     <div class="products-grid">
         {% for product in products %}
         <div class="product-card">
-            <img src="{{ url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/300x300/0a1929/f5c842?text=POINT+PUB' }}" alt="{{ product.name }}" loading="lazy">
+            <img src="{{ product.image if product.image and product.image.startswith('http') else url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/300x300/0a1929/f5c842?text=POINT+PUB' }}" alt="{{ product.name }}" loading="lazy">
             <h3>{{ product.name }}</h3>
             <p class="product-price">{{ product.price }} دج</p>
             <a href="{{ url_for('product_detail', id=product.id) }}" class="btn-outline">التفاصيل</a>

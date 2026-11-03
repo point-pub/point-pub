@@ -12,6 +12,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>الصورة</th>
                 <th>الاسم</th>
                 <th>السعر</th>
                 <th>المخزون</th>
@@ -23,6 +24,9 @@
             {% for product in products %}
             <tr>
                 <td>{{ product.id }}</td>
+                <td>
+                    <img src="{{ product.image if product.image and product.image.startswith('http') else url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/60x60/0a1929/f5c842?text=PP' }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                </td>
                 <td>{{ product.name }}</td>
                 <td>{{ product.price }} دج</td>
                 <td>{{ product.stock }}</td>
@@ -33,7 +37,7 @@
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" style="text-align:center;">لا توجد منتجات</td></tr>
+            <tr><td colspan="7" style="text-align:center;">لا توجد منتجات</td></tr>
             {% endfor %}
         </tbody>
     </table>

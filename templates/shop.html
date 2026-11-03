@@ -4,7 +4,7 @@
 
 {% block content %}
 <section class="shop-section">
-    <h1>🛒 المتجر</h1>
+    <h1>المتجر</h1>
     <p class="subtitle">اكتشف منتجاتنا المميزة</p>
 
     <form method="GET" class="filters-form">
@@ -15,7 +15,7 @@
             <option value="">جميع الفئات</option>
             {% for cat in categories %}
                 {% if cat[0] %}
-                <option value="{{ cat[0] }}">{{ cat[0] }}</option>
+                <option value="{{ cat[0] }}" {% if category == cat[0] %}selected{% endif %}>{{ cat[0] }}</option>
                 {% endif %}
             {% endfor %}
         </select>
@@ -25,12 +25,12 @@
     <div class="products-grid">
         {% for product in products %}
         <div class="product-card">
-            <img src="{{ url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/300x300/0a1929/f5c842?text=POINT+PUB' }}" alt="{{ product.name }}">
+            <img src="{{ product.image if product.image and product.image.startswith('http') else url_for('static', filename='images/products/' + product.image) if product.image else 'https://via.placeholder.com/300x300/0a1929/f5c842?text=POINT+PUB' }}" alt="{{ product.name }}">
             <h3>{{ product.name }}</h3>
             <p class="product-price">{{ product.price }} دج</p>
             <div class="product-actions">
                 <a href="{{ url_for('product_detail', id=product.id) }}" class="btn-outline">التفاصيل</a>
-                <a href="{{ url_for('add_to_cart', id=product.id) }}" class="btn-primary">🛒 أضف</a>
+                <a href="{{ url_for('add_to_cart', id=product.id) }}" class="btn-primary">أضف</a>
             </div>
         </div>
         {% else %}
