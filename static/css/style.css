@@ -145,84 +145,61 @@ a {
     100% { transform: translateY(0) scale(1); }
 }
 
-/* ===== الشعار في Hero (تأثير الظهور الاحترافي) ===== */
+/* ===== الشعار في Hero (تأثير الرسم والكشف الاحترافي) ===== */
 .hero-logo-wrapper {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 128px;
-    height: 128px;
+    width: 160px;
+    height: 160px;
     background: #ffffff;
     border-radius: 50%;
-    border: 3px solid rgba(245, 200, 66, 0.3);
-    box-shadow: 0 10px 40px rgba(79, 195, 247, 0.3), 0 0 60px rgba(79, 195, 247, 0.2);
-    margin-bottom: 1.5rem;
-    transition: all 0.4s ease;
+    border: 3px solid rgba(245, 200, 66, 0.6);
+    box-shadow: 0 0 50px rgba(79, 195, 247, 0.4);
+    margin-bottom: 2rem;
     cursor: pointer;
     
-    /* تأثير الظهور الأولي (كأنه يُرسم) ثم الطفو */
-    animation: revealLogo 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
-               bubbleFloat 4s ease-in-out infinite 2s;
+    /* نبض خفيف للخلفية البيضاء */
+    animation: pulseGlow 3s infinite alternate;
 }
 
-@keyframes revealLogo {
-    0% {
-        opacity: 0;
-        transform: scale(0.2) rotate(-180deg);
-        filter: blur(10px) drop-shadow(0 0 0px rgba(79, 195, 247, 0));
-    }
-    50% {
-        opacity: 0.8;
-        transform: scale(1.1) rotate(10deg);
-        filter: blur(0px) drop-shadow(0 0 40px rgba(79, 195, 247, 0.8));
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) rotate(0deg);
-        filter: blur(0px) drop-shadow(0 0 20px rgba(79, 195, 247, 0.4));
-    }
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 30px rgba(79, 195, 247, 0.3); }
+    100% { box-shadow: 0 0 70px rgba(79, 195, 247, 0.7); }
 }
 
 .hero-logo-wrapper .hero-logo {
-    width: 88px;
-    height: 88px;
+    width: 110px;
+    height: 110px;
     object-fit: contain;
-    transition: all 0.5s ease;
     
-    /* تأثير ظهور الصورة نفسها */
-    animation: logoReveal 2s ease-out forwards;
+    /* تأثير الكشف (الرسم) من اليمين إلى اليسار */
+    animation: drawReveal 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes logoReveal {
+@keyframes drawReveal {
     0% {
+        clip-path: inset(0 0 0 100%); /* مخفي تماماً من اليسار (يظهر من اليمين) */
         opacity: 0;
-        transform: scale(0.5);
-        filter: brightness(2) blur(5px);
+        filter: brightness(3);
+    }
+    50% {
+        opacity: 1;
+        filter: brightness(1.5);
     }
     100% {
+        clip-path: inset(0 0 0 0); /* ظاهر بالكامل */
         opacity: 1;
-        transform: scale(1);
-        filter: brightness(1) blur(0);
+        filter: brightness(1);
     }
 }
 
 /* تأثير التوهج عند المرور بالماوس */
 .hero-logo-wrapper:hover {
-    background: #ffffff;
-    box-shadow: 0 15px 60px rgba(79, 195, 247, 0.8), 0 0 80px rgba(79, 195, 247, 0.6);
-    transform: scale(1.05) translateY(-8px);
+    transform: scale(1.05);
+    box-shadow: 0 0 80px rgba(79, 195, 247, 0.9);
     border-color: var(--gold);
-}
-
-.hero-logo-wrapper:hover .hero-logo {
-    animation: logoHit 0.8s ease;
-}
-
-/* حركة الطفو المستمرة */
-@keyframes bubbleFloat {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-8px) scale(1.02); }
 }
 
 /* ===== الشعار في الفوتر ===== */
@@ -1676,13 +1653,13 @@ section {
     }
 
     .hero-logo-wrapper {
-        width: 96px;
-        height: 96px;
+        width: 120px;
+        height: 120px;
     }
 
     .hero-logo-wrapper .hero-logo {
-        width: 68px;
-        height: 68px;
+        width: 80px;
+        height: 80px;
     }
 }
 
