@@ -2,7 +2,6 @@ from flask import Flask, render_template, redirect, url_for, flash, request, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from datetime import datetime
 import os
@@ -12,6 +11,8 @@ from models import (
     Service, FAQ, SiteInfo, GalleryItem,
     Marketer, MarketerSale, MarketerPayment, Partner
 )
+
+from algeria_locations import WILAYAS
 
 load_dotenv()
 
@@ -30,7 +31,6 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///point_pub.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/images/products'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 db.init_app(app)
@@ -133,14 +133,13 @@ def cart():
     return render_template('cart.html', items=items, total=total)
 
 
-# ===== هذا هو التعديل المطلوب (التوجيه للسلة) =====
 @app.route('/add-to-cart/<int:id>')
 def add_to_cart(id):
     cart = session.get('cart', {})
     cart[str(id)] = cart.get(str(id), 0) + 1
     session['cart'] = cart
     flash('تمت إضافة المنتج إلى السلة', 'success')
-    return redirect(url_for('cart'))  # <--- التعديل هنا: ينتقل إلى السلة بدلاً من المتجر
+    return redirect(url_for('cart'))
 
 
 @app.route('/remove-from-cart/<int:id>')
@@ -169,7 +168,9 @@ def checkout():
         name = request.form.get('name')
         phone = request.form.get('phone')
         address = request.form.get('address')
-        city = request.form.get('city')
+        wilaya = request.form.get('wilaya')
+        daira = request.form.get('daira')
+        delivery_type = request.form.get('delivery_type')
         notes = request.form.get('notes', '')
         coupon_code = request.form.get('coupon', '')
         marketer_code = request.form.get('marketer_code', '')
@@ -215,7 +216,9 @@ def checkout():
             customer_name=name,
             customer_phone=phone,
             customer_address=address,
-            customer_city=city,
+            wilaya=wilaya,
+            daira=daira,
+            delivery_type=delivery_type,
             notes=notes,
             total=total,
             discount=discount,
@@ -254,7 +257,7 @@ def checkout():
         flash('تم استلام طلبك بنجاح! سنتواصل معك قريباً.', 'success')
         return redirect(url_for('order_success', id=order.id))
 
-    return render_template('checkout.html')
+    return render_template('checkout.html', wilayas=WILAYAS)
 
 
 @app.route('/order-success/<int:id>')
@@ -501,11 +504,8 @@ def admin_product_add():
         category = request.form.get('category', '')
         stock = request.form.get('stock', type=int, default=0)
 
-        image_file = request.files.get('image')
-        image_name = None
-        if image_file and image_file.filename:
-            image_name = secure_filename(image_file.filename)
-            image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_name))
+        # استقبال رابط الصورة من خانة النص
+        image_name = request.form.get('image_url')
 
         product = Product(
             name=name,
@@ -537,11 +537,8 @@ def admin_product_edit(id):
         product.category = request.form.get('category', '')
         product.stock = request.form.get('stock', type=int, default=0)
 
-        image_file = request.files.get('image')
-        if image_file and image_file.filename:
-            image_name = secure_filename(image_file.filename)
-            image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_name))
-            product.image = image_name
+        # تحديث رابط الصورة
+        product.image = request.form.get('image_url')
 
         db.session.commit()
         flash('تم تحديث المنتج بنجاح', 'success')

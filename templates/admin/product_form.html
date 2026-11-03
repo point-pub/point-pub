@@ -6,7 +6,7 @@
 <section class="admin-dashboard">
     <h1>{{ "تعديل منتج" if product else "إضافة منتج جديد" }}</h1>
 
-    <form method="POST" enctype="multipart/form-data" class="checkout-form" style="max-width: 700px;">
+    <form method="POST" class="checkout-form" style="max-width: 700px;">
         <input type="text" name="name" placeholder="اسم المنتج" value="{{ product.name if product else '' }}" required>
         <textarea name="description" placeholder="وصف المنتج">{{ product.description if product else '' }}</textarea>
         <input type="number" name="price" placeholder="السعر" step="0.01" value="{{ product.price if product else '' }}" required>
@@ -14,9 +14,9 @@
         <input type="text" name="category" placeholder="الفئة" value="{{ product.category if product else '' }}">
         <input type="number" name="stock" placeholder="المخزون" value="{{ product.stock if product else '0' }}">
 
-        <!-- ===== حقل رفع الصورة ===== -->
-        <label style="color: var(--gold); margin-top: 1rem;">صورة المنتج:</label>
-        <input type="file" name="image" accept="image/*" style="padding: 10px; background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px; color: var(--white);">
+        <!-- ===== حقل رابط الصورة ===== -->
+        <label style="color: var(--gold); margin-top: 1rem;">رابط صورة المنتج (انسخه من Cloudinary والصقه هنا):</label>
+        <input type="text" name="image_url" placeholder="https://res.cloudinary.com/..." value="{{ product.image if product else '' }}" style="padding: 10px; background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px; color: var(--white);">
 
         {% if product and product.image %}
         <div style="margin-top: 1rem;">
