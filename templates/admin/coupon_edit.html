@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}تعديل الكوبون{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>تعديل الكوبون: {{ coupon.code }}</h1>
+
+    {% if coupon.coupon_type == 'influencer' %}
+    <div style="background: var(--dark-card); border: 1px solid var(--gold); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+        <p style="color: var(--gold); margin-bottom: 0.5rem;"><strong>🎯 كوبون مؤثر</strong></p>
+        <p style="color: var(--gray); margin: 0.25rem 0;">اسم المؤثر: <strong>{{ coupon.influencer_name }}</strong> (لا يمكن تغييره)</p>
+        <p style="color: var(--gray); margin: 0.25rem 0;">إجمالي المبيعات: <strong>{{ '%.2f'|format(coupon.influencer_total_sales or 0) }} دج</strong></p>
+        <p style="color: var(--gray); margin: 0.25rem 0;">إجمالي العمولة: <strong>{{ '%.2f'|format(coupon.influencer_total_commission or 0) }} دج</strong></p>
+        <p style="color: var(--gray); margin: 0.25rem 0;">المدفوع: <strong>{{ '%.2f'|format(coupon.influencer_total_paid or 0) }} دج</strong></p>
+        <p style="color: var(--gold); margin: 0.25rem 0;">المتبقي: <strong>{{ '%.2f'|format(coupon.influencer_balance) }} دج</strong></p>
+        <p style="color: var(--gray); font-size: 0.85rem; margin-top: 0.5rem;">
+            ⓘ الإحصائيات محفوظة ولن تتأثر بتعديل النسب.
+        </p>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="checkout-form" style="max-width: 700px;">
+        <label style="color: var(--gold);">الكود:</label>
+        <input type="text" name="code" value="{{ coupon.code }}" required>
+
+        <label style="color: var(--gold);">نسبة خصم الزبون (%):</label>
+        <input type="number" name="discount_percent" value="{{ coupon.discount_percent }}" step="0.1" min="0" max="100" required>
+
+        {% if coupon.coupon_type == 'influencer' %}
+            <label style="color: var(--gold);">نسبة عمولة المؤثر (%):</label>
+            <input type="number" name="influencer_commission_percent" value="{{ coupon.influencer_commission_percent or 0 }}" step="0.1" min="0" max="100" required>
+            <p style="color: var(--gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                ⓘ نصيحة: للحفاظ على "5% للزبون + 5% للمؤثر"، اجعل النسبتين متساويتين (5 و 5).
+            </p>
+        {% elif coupon.coupon_type == 'quantity' %}
+            <label style="color: var(--gray);">الحد الأقصى للاستخدام:</label>
+            <input type="number" name="max_uses" value="{{ coupon.max_uses or '' }}">
+        {% elif coupon.coupon_type == 'time' %}
+            <label style="color: var(--gray);">تاريخ البداية:</label>
+            <input type="date" name="start_date" value="{{ coupon.start_date.strftime('%Y-%m-%d') if coupon.start_date else '' }}">
+            <label style="color: var(--gray);">تاريخ النهاية:</label>
+            <input type="date" name="end_date" value="{{ coupon.end_date.strftime('%Y-%m-%d') if coupon.end_date else '' }}">
+        {% endif %}
+
+        <button type="submit" class="btn-primary" style="margin-top: 1rem;">حفظ التعديلات</button>
+        <a href="/admin/coupons" class="btn-outline" style="margin-top: 1rem;">إلغاء</a>
+    </form>
+</section>
+{% endblock %}

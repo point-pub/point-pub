@@ -32,6 +32,9 @@ class Order(db.Model):
     customer_phone = db.Column(db.String(20), nullable=False)
     customer_address = db.Column(db.Text, nullable=False)
     customer_city = db.Column(db.String(100), nullable=True)
+    wilaya = db.Column(db.String(100), nullable=True)
+    daira = db.Column(db.String(100), nullable=True)
+    delivery_type = db.Column(db.String(50), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     total = db.Column(db.Float, nullable=False)
     discount = db.Column(db.Float, default=0)
@@ -67,7 +70,7 @@ class Coupon(db.Model):
     code = db.Column(db.String(50), unique=True, nullable=False)
     discount_percent = db.Column(db.Float, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)
-    coupon_type = db.Column(db.String(20), default='quantity')
+    coupon_type = db.Column(db.String(20), default='quantity')  # 'time' | 'quantity' | 'influencer'
     start_date = db.Column(db.DateTime, nullable=True)
     end_date = db.Column(db.DateTime, nullable=True)
     max_uses = db.Column(db.Integer, nullable=True)
@@ -75,6 +78,38 @@ class Coupon(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     product = db.relationship('Product', backref='coupons')
+
+    # ===== حقول كوبون المؤثر =====
+    # unique=True: كل مؤثر له كوبون واحد فقط (NULL مسموح متعدد للكوبونات العادية)
+    influencer_name = db.Column(db.String(100), unique=True, nullable=True, index=True)
+    influencer_commission_percent = db.Column(db.Float, default=0.0)
+    influencer_total_sales = db.Column(db.Float, default=0.0)
+    influencer_total_commission = db.Column(db.Float, default=0.0)
+    influencer_total_paid = db.Column(db.Float, default=0.0)
+
+    @property
+    def influencer_balance(self):
+        """الرصيد المتبقي للمؤثر = إجمالي العمولة - إجمالي المدفوع"""
+        return (self.influencer_total_commission or 0) - (self.influencer_total_paid or 0)
+
+    def is_valid(self):
+        """التحقق من صلاحية الكوبون. يُرجع (bool, reason)."""
+        if not self.is_active:
+            return False, 'الكوبون غير نشط'
+
+        if self.coupon_type == 'time':
+            now = datetime.utcnow()
+            if self.start_date and now < self.start_date:
+                return False, 'لم يبدأ الكوبون بعد'
+            if self.end_date and now > self.end_date:
+                return False, 'انتهت صلاحية الكوبون'
+
+        elif self.coupon_type == 'quantity':
+            if self.max_uses and self.used_count >= self.max_uses:
+                return False, 'تم استنفاد الكوبون'
+
+        # 'influencer' = لا نهائي
+        return True, None
 
 
 class Service(db.Model):
@@ -123,10 +158,7 @@ class Marketer(db.Model):
     experience = db.Column(db.String(50), nullable=True)
     social_link = db.Column(db.String(300), nullable=True)
     motivation = db.Column(db.Text, nullable=True)
-    
-    # هذا هو السطر الأهم: القيمة الافتراضية pending
-    status = db.Column(db.String(50), default='pending') 
-    
+    status = db.Column(db.String(50), default='pending')
     total_sales = db.Column(db.Float, default=0)
     total_commission = db.Column(db.Float, default=0)
     total_paid = db.Column(db.Float, default=0)

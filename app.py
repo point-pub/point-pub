@@ -189,9 +189,15 @@ def checkout():
                 total += subtotal
                 items.append({'product': product, 'quantity': qty, 'subtotal': subtotal})
 
+        # ===== معالجة الكوبون (زمني / عددي / مؤثر) =====
         discount = 0
+        applied_coupon = None
         if coupon_code:
-            coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
+            coupon = Coupon.query.filter_by(
+                code=coupon_code.upper().strip(),
+                is_active=True
+            ).first()
+
             if coupon:
                 valid = True
                 if coupon.coupon_type == 'time':
@@ -208,9 +214,12 @@ def checkout():
                     discount = total * (coupon.discount_percent / 100)
                     total -= discount
                     coupon.used_count += 1
+                    applied_coupon = coupon
                     flash(f'تم تطبيق الخصم: {coupon.discount_percent}%', 'success')
                 else:
                     flash('عذراً، هذا الكوبون غير صالح', 'error')
+            else:
+                flash('عذراً، هذا الكوبون غير صالح', 'error')
 
         order = Order(
             customer_name=name,
@@ -237,6 +246,7 @@ def checkout():
             )
             db.session.add(order_item)
 
+        # ===== عمولة المسوق (15% على المبلغ بعد الخصم) =====
         if marketer_code:
             marketer = Marketer.query.filter_by(code=marketer_code, status='approved').first()
             if marketer:
@@ -250,6 +260,12 @@ def checkout():
                 db.session.add(sale)
                 marketer.total_sales += total
                 marketer.total_commission += commission
+
+        # ===== عمولة المؤثر (5% محسوبة على السعر الأصلي قبل الخصم) =====
+        if applied_coupon and applied_coupon.coupon_type == 'influencer':
+            commission = (total + discount) * (applied_coupon.influencer_commission_percent / 100)
+            applied_coupon.influencer_total_sales = (applied_coupon.influencer_total_sales or 0) + total
+            applied_coupon.influencer_total_commission = (applied_coupon.influencer_total_commission or 0) + commission
 
         db.session.commit()
         session['cart'] = {}
@@ -504,7 +520,6 @@ def admin_product_add():
         category = request.form.get('category', '')
         stock = request.form.get('stock', type=int, default=0)
 
-        # استقبال رابط الصورة من خانة النص
         image_name = request.form.get('image_url')
 
         product = Product(
@@ -536,8 +551,6 @@ def admin_product_edit(id):
         product.old_price = request.form.get('old_price', type=float)
         product.category = request.form.get('category', '')
         product.stock = request.form.get('stock', type=int, default=0)
-
-        # تحديث رابط الصورة
         product.image = request.form.get('image_url')
 
         db.session.commit()
@@ -698,10 +711,18 @@ def admin_coupons():
 @login_required
 def admin_coupon_add():
     if request.method == 'POST':
-        code = request.form.get('code').upper()
+        code = request.form.get('code', '').strip().upper()
         discount_percent = request.form.get('discount_percent', type=float)
         product_id = request.form.get('product_id', type=int)
         coupon_type = request.form.get('coupon_type', 'quantity')
+
+        if not code or discount_percent is None:
+            flash('الرجاء إدخال الكود ونسبة الخصم', 'error')
+            return redirect(url_for('admin_coupon_add'))
+
+        if Coupon.query.filter_by(code=code).first():
+            flash(f'الكود "{code}" مستخدم مسبقاً. اختر كوداً آخر.', 'error')
+            return redirect(url_for('admin_coupon_add'))
 
         coupon = Coupon(
             code=code,
@@ -720,16 +741,100 @@ def admin_coupon_add():
                 coupon.end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
         elif coupon_type == 'quantity':
-            max_uses = request.form.get('max_uses', type=int)
-            coupon.max_uses = max_uses
+            coupon.max_uses = request.form.get('max_uses', type=int)
 
-        db.session.add(coupon)
-        db.session.commit()
-        flash('تم إنشاء الكوبون', 'success')
-        return redirect(url_for('admin_coupons'))
+        elif coupon_type == 'influencer':
+            name = request.form.get('influencer_name', '').strip()
+            commission = request.form.get('influencer_commission_percent', type=float) or 0.0
+
+            if not name:
+                flash('الرجاء إدخال اسم المؤثر', 'error')
+                return redirect(url_for('admin_coupon_add'))
+
+            existing = Coupon.query.filter(
+                Coupon.coupon_type == 'influencer',
+                db.func.lower(Coupon.influencer_name) == name.lower()
+            ).first()
+
+            if existing:
+                flash(
+                    f'يوجد بالفعل كوبون للمؤثر "{name}" بالكود "{existing.code}". '
+                    f'كل مؤثر له كوبون واحد فقط. احذف الكوبون القديم أولاً إن أردت إنشاء كود جديد.',
+                    'error'
+                )
+                return redirect(url_for('admin_coupon_add'))
+
+            coupon.product_id = None
+            coupon.max_uses = None
+            coupon.influencer_name = name
+            coupon.influencer_commission_percent = commission
+
+        try:
+            db.session.add(coupon)
+            db.session.commit()
+            flash('تم إنشاء الكوبون بنجاح', 'success')
+            return redirect(url_for('admin_coupons'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'خطأ في حفظ الكوبون: {e}', 'error')
+            return redirect(url_for('admin_coupon_add'))
 
     products = Product.query.filter_by(is_active=True).all()
     return render_template('admin/coupon_form.html', products=products)
+
+
+@app.route('/admin/coupon/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def admin_coupon_edit(id):
+    coupon = Coupon.query.get_or_404(id)
+
+    if request.method == 'POST':
+        new_code = request.form.get('code', '').strip().upper()
+        new_discount = request.form.get('discount_percent', type=float)
+
+        if not new_code or new_discount is None:
+            flash('الرجاء إدخال الكود ونسبة الخصم', 'error')
+            return redirect(url_for('admin_coupon_edit', id=id))
+
+        # التحقق من أن الكود الجديد غير مستخدم من كوبون آخر
+        conflict = Coupon.query.filter(
+            Coupon.code == new_code,
+            Coupon.id != coupon.id
+        ).first()
+        if conflict:
+            flash(f'الكود "{new_code}" مستخدم مسبقاً في كوبون آخر.', 'error')
+            return redirect(url_for('admin_coupon_edit', id=id))
+
+        coupon.code = new_code
+        coupon.discount_percent = new_discount
+
+        if coupon.coupon_type == 'influencer':
+            new_commission = request.form.get('influencer_commission_percent', type=float)
+            if new_commission is None:
+                flash('الرجاء إدخال نسبة عمولة المؤثر', 'error')
+                return redirect(url_for('admin_coupon_edit', id=id))
+            coupon.influencer_commission_percent = new_commission
+        else:
+            if coupon.coupon_type == 'quantity':
+                coupon.max_uses = request.form.get('max_uses', type=int)
+            elif coupon.coupon_type == 'time':
+                start_date = request.form.get('start_date')
+                end_date = request.form.get('end_date')
+                if start_date:
+                    coupon.start_date = datetime.strptime(start_date, '%Y-%m-%d')
+                if end_date:
+                    coupon.end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+        try:
+            db.session.commit()
+            flash('تم تحديث الكوبون بنجاح', 'success')
+            return redirect(url_for('admin_coupons'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'خطأ في تحديث الكوبون: {e}', 'error')
+            return redirect(url_for('admin_coupon_edit', id=id))
+
+    return render_template('admin/coupon_edit.html', coupon=coupon)
 
 
 @app.route('/admin/coupon/delete/<int:id>')
@@ -739,6 +844,26 @@ def admin_coupon_delete(id):
     db.session.delete(coupon)
     db.session.commit()
     flash('تم حذف الكوبون', 'success')
+    return redirect(url_for('admin_coupons'))
+
+
+# ===== دفع مستحقات المؤثر =====
+@app.route('/admin/coupon/<int:id>/pay', methods=['POST'])
+@login_required
+def admin_coupon_pay(id):
+    coupon = Coupon.query.get_or_404(id)
+    if coupon.coupon_type != 'influencer':
+        flash('هذا الكوبون ليس كوبون مؤثر', 'error')
+        return redirect(url_for('admin_coupons'))
+
+    amount = request.form.get('amount', type=float)
+    if amount and amount > 0:
+        coupon.influencer_total_paid = (coupon.influencer_total_paid or 0) + amount
+        db.session.commit()
+        flash(f'تم تسجيل دفعة {amount:.2f} دج للمؤثر {coupon.influencer_name}', 'success')
+    else:
+        flash('الرجاء إدخال مبلغ صحيح', 'error')
+
     return redirect(url_for('admin_coupons'))
 
 

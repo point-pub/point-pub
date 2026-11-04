@@ -1,50 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}إدارة الكوبونات{% endblock %}
+{% block title %}الكوبونات{% endblock %}
 
 {% block content %}
 <section class="admin-dashboard">
     <h1>إدارة الكوبونات</h1>
 
-    <a href="/admin/coupon/add" class="btn-primary">إضافة كوبون جديد</a>
+    <a href="/admin/coupon/add" class="btn-primary" style="margin-bottom: 2rem; display: inline-block;">➕ إضافة كوبون جديد</a>
 
-    <table class="admin-table" style="margin-top: 2rem;">
+    <table class="admin-table">
         <thead>
             <tr>
-                <th>#</th>
                 <th>الكود</th>
-                <th>الخصم %</th>
                 <th>النوع</th>
-                <th>التفاصيل</th>
-                <th>الحالة</th>
+                <th>خصم الزبون</th>
+                <th>المؤثر</th>
+                <th>عمولة المؤثر</th>
+                <th>المبيعات</th>
+                <th>العمولة المتراكمة</th>
+                <th>المدفوع</th>
+                <th>المتبقي</th>
+                <th>الاستخدام</th>
                 <th>إجراءات</th>
             </tr>
         </thead>
         <tbody>
-            {% for coupon in coupons %}
+            {% for c in coupons %}
             <tr>
-                <td>{{ coupon.id }}</td>
-                <td>{{ coupon.code }}</td>
-                <td>{{ coupon.discount_percent }}%</td>
+                <td><strong>{{ c.code }}</strong></td>
                 <td>
-                    {% if coupon.coupon_type == 'time' %}⏰ زمني
-                    {% else %}🔢 عدد محدود{% endif %}
-                </td>
-                <td>
-                    {% if coupon.coupon_type == 'time' %}
-                        من {{ coupon.start_date.strftime('%Y-%m-%d') if coupon.start_date else 'الآن' }}
-                        إلى {{ coupon.end_date.strftime('%Y-%m-%d') if coupon.end_date else 'غير محدد' }}
-                    {% else %}
-                        {{ coupon.used_count }} / {{ coupon.max_uses or '∞' }}
+                    {% if c.coupon_type == 'time' %}زمني
+                    {% elif c.coupon_type == 'quantity' %}عددي
+                    {% elif c.coupon_type == 'influencer' %}🎯 مؤثر
                     {% endif %}
                 </td>
-                <td>{{ "نشط" if coupon.is_active else "معطل" }}</td>
+                <td>{{ c.discount_percent }}%</td>
+                <td>{{ c.influencer_name or '—' }}</td>
+                <td>{% if c.coupon_type == 'influencer' %}{{ c.influencer_commission_percent or 0 }}%{% else %}—{% endif %}</td>
+                <td>{{ '%.2f'|format(c.influencer_total_sales or 0) }} دج</td>
+                <td>{{ '%.2f'|format(c.influencer_total_commission or 0) }} دج</td>
+                <td>{{ '%.2f'|format(c.influencer_total_paid or 0) }} دج</td>
+                <td><strong style="color: var(--gold);">{{ '%.2f'|format(c.influencer_balance) }} دج</strong></td>
+                <td>{{ c.used_count }}{% if c.max_uses %} / {{ c.max_uses }}{% endif %}</td>
                 <td>
-                    <a href="/admin/coupon/delete/{{ coupon.id }}" class="btn-delete" onclick="return confirm('هل أنت متأكد؟')">حذف</a>
+                    <a href="/admin/coupon/edit/{{ c.id }}" class="btn-view">تعديل</a>
+
+                    {% if c.coupon_type == 'influencer' %}
+                    <form method="POST" action="/admin/coupon/{{ c.id }}/pay" style="display:inline-flex; gap:4px; margin-top:4px;">
+                        <input type="number" name="amount" placeholder="مبلغ" step="0.01" style="width: 80px; padding: 4px; background: var(--dark-bg); border: 1px solid var(--dark-border); border-radius: 6px; color: var(--white);">
+                        <button type="submit" class="btn-view">دفع</button>
+                    </form>
+                    {% endif %}
+
+                    <a href="/admin/coupon/delete/{{ c.id }}" class="btn-delete" onclick="return confirm('حذف الكوبون نهائياً؟')" style="margin-top:4px;">حذف</a>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" style="text-align:center;">لا توجد كوبونات</td></tr>
+            <tr>
+                <td colspan="11" style="text-align:center; color: var(--gray); padding: 2rem;">لا توجد كوبونات بعد.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
