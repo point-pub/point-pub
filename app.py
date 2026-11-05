@@ -4,6 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
+from sqlalchemy import text
 import os
 
 from models import (
@@ -796,7 +797,6 @@ def admin_coupon_edit(id):
             flash('الرجاء إدخال الكود ونسبة الخصم', 'error')
             return redirect(url_for('admin_coupon_edit', id=id))
 
-        # التحقق من أن الكود الجديد غير مستخدم من كوبون آخر
         conflict = Coupon.query.filter(
             Coupon.code == new_code,
             Coupon.id != coupon.id
@@ -847,7 +847,6 @@ def admin_coupon_delete(id):
     return redirect(url_for('admin_coupons'))
 
 
-# ===== دفع مستحقات المؤثر =====
 @app.route('/admin/coupon/<int:id>/pay', methods=['POST'])
 @login_required
 def admin_coupon_pay(id):
@@ -867,9 +866,43 @@ def admin_coupon_pay(id):
     return redirect(url_for('admin_coupons'))
 
 
-# ===== إنشاء قاعدة البيانات =====
+# ===== إنشاء قاعدة البيانات والترحيل التلقائي =====
 with app.app_context():
     db.create_all()
+    
+    def add_column_if_missing(table, column, col_type):
+        try:
+            db.session.execute(text(f'SELECT {column} FROM "{table}" LIMIT 1'))
+        except Exception:
+            db.session.rollback()
+            try:
+                db.session.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {column} {col_type}'))
+                db.session.commit()
+                print(f"Added column {column} to {table}")
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error adding column {column}: {e}")
+
+    # ترحيل جدول coupon
+    add_column_if_missing('coupon', 'influencer_name', 'VARCHAR(100)')
+    add_column_if_missing('coupon', 'influencer_commission_percent', 'FLOAT DEFAULT 0')
+    add_column_if_missing('coupon', 'influencer_total_sales', 'FLOAT DEFAULT 0')
+    add_column_if_missing('coupon', 'influencer_total_commission', 'FLOAT DEFAULT 0')
+    add_column_if_missing('coupon', 'influencer_total_paid', 'FLOAT DEFAULT 0')
+
+    # ترحيل جدول order
+    add_column_if_missing('order', 'wilaya', 'VARCHAR(100)')
+    add_column_if_missing('order', 'daira', 'VARCHAR(100)')
+    add_column_if_missing('order', 'delivery_type', 'VARCHAR(50)')
+
+    # إضافة الفهرس الفريد
+    try:
+        db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_coupon_influencer_name ON coupon (influencer_name)"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    # إنشاء حساب المدير
     admin_username = os.getenv('ADMIN_USERNAME', 'admin')
     if not User.query.filter_by(username=admin_username).first():
         admin = User(
@@ -879,7 +912,7 @@ with app.app_context():
         )
         db.session.add(admin)
         db.session.commit()
-        print('تم إنشاء حساب المدير')
+        print("Admin account created")
 
 
 if __name__ == '__main__':
