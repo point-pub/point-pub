@@ -7,54 +7,63 @@
     <h1>إضافة كوبون جديد</h1>
 
     <form method="POST" class="checkout-form" style="max-width: 700px;">
-        <input type="text" name="code" placeholder="كود الخصم (مثال: PROMO10)" required>
-        <input type="number" name="discount_percent" placeholder="نسبة الخصم %" min="1" max="100" step="1" required>
-
-        <label style="color: var(--gold); margin-top: 1rem;">اختر المنتج (اختياري):</label>
-        <select name="product_id" style="padding: 14px; background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px; color: var(--white); font-family: inherit; font-size: 1rem;">
-            <option value="">كل المنتجات (بدون تحديد)</option>
-            {% for product in products %}
-            <option value="{{ product.id }}">{{ product.name }}</option>
-            {% endfor %}
-        </select>
+        <input type="text" name="code" placeholder="الكود (مثل PROMO10 أو ALI5)" required>
+        <input type="number" name="discount_percent" placeholder="نسبة الخصم للزبون (%)" step="0.1" min="0" max="100" required>
 
         <label style="color: var(--gold); margin-top: 1rem;">نوع الكوبون:</label>
-        <select name="coupon_type" id="coupon_type" onchange="toggleCouponFields()" style="padding: 14px; background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 12px; color: var(--white); font-family: inherit; font-size: 1rem;">
-            <option value="quantity">كوبون ذو عدد معين</option>
-            <option value="time">كوبون ذو مدة زمنية</option>
+        <select name="coupon_type" id="coupon_type" onchange="toggleFields()">
+            <option value="quantity">ذو عدد محدود</option>
+            <option value="time">ذو مدة زمنية</option>
+            <option value="influencer">كوبون مؤثر (لا نهائي)</option>
         </select>
 
-        <div id="quantity_fields">
-            <label style="color: var(--gold); margin-top: 1rem;">عدد الاستخدامات الأقصى:</label>
-            <input type="number" name="max_uses" placeholder="مثال: 100" min="1">
+        <div id="product_field" style="margin-top: 1rem;">
+            <label style="color: var(--gray);">المنتج (اتركه فارغاً لكل المنتجات):</label>
+            <select name="product_id">
+                <option value="">كل المنتجات</option>
+                {% for p in products %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
         </div>
 
-        <div id="time_fields" style="display: none;">
-            <label style="color: var(--gold); margin-top: 1rem;">تاريخ البداية:</label>
-            <input type="date" name="start_date">
+        <div id="quantity_fields" style="margin-top: 1rem;">
+            <input type="number" name="max_uses" placeholder="الحد الأقصى للاستخدام">
+        </div>
 
-            <label style="color: var(--gold); margin-top: 1rem;">تاريخ النهاية:</label>
+        <div id="time_fields" style="display:none; margin-top: 1rem;">
+            <label style="color: var(--gray);">تاريخ البداية:</label>
+            <input type="date" name="start_date">
+            <label style="color: var(--gray);">تاريخ النهاية:</label>
             <input type="date" name="end_date">
         </div>
 
-        <button type="submit" class="btn-primary">حفظ</button>
-        <a href="/admin/coupons" class="btn-outline">إلغاء</a>
+        <!-- خانات المؤثر التي كانت مخفية -->
+        <div id="influencer_fields" style="display:none; margin-top: 1rem;">
+            <label style="color: var(--gold);">اسم المؤثر / صانع المحتوى:</label>
+            <input type="text" name="influencer_name" placeholder="مثال: علي">
+            <label style="color: var(--gold);">نسبة عمولة المؤثر (%):</label>
+            <input type="number" name="influencer_commission_percent" step="0.1" min="0" max="100" placeholder="مثال: 5">
+            <p style="color: var(--gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                ملاحظة: كوبون المؤثر لا نهائي، يشمل كل المنتجات، ولا يحتاج منتجاً أو تاريخاً.
+            </p>
+        </div>
+
+        <button type="submit" class="btn-primary" style="margin-top: 1rem;">حفظ</button>
+        <a href="/admin/coupons" class="btn-outline" style="margin-top: 1rem;">إلغاء</a>
     </form>
 </section>
 
+<!-- هذا الكود هو الذي يظهر ويخفي الخانات بناءً على اختيارك -->
 <script>
-function toggleCouponFields() {
+function toggleFields() {
     const type = document.getElementById('coupon_type').value;
-    const quantityFields = document.getElementById('quantity_fields');
-    const timeFields = document.getElementById('time_fields');
-
-    if (type === 'quantity') {
-        quantityFields.style.display = 'block';
-        timeFields.style.display = 'none';
-    } else {
-        quantityFields.style.display = 'none';
-        timeFields.style.display = 'block';
-    }
+    document.getElementById('quantity_fields').style.display = type === 'quantity' ? 'block' : 'none';
+    document.getElementById('time_fields').style.display = type === 'time' ? 'block' : 'none';
+    document.getElementById('influencer_fields').style.display = type === 'influencer' ? 'block' : 'none';
+    document.getElementById('product_field').style.display = type === 'influencer' ? 'none' : 'block';
 }
+// تشغيل الدالة عند فتح الصفحة لأول مرة
+toggleFields();
 </script>
 {% endblock %}
