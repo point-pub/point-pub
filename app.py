@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, session
+from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -163,6 +163,51 @@ def update_cart(id, qty):
     return redirect(url_for('cart'))
 
 
+# ===== مسار التحقق المباشر من الكوبون =====
+@app.route('/api/check-coupon', methods=['POST'])
+def api_check_coupon():
+    data = request.get_json()
+    coupon_code = data.get('code', '').upper().strip()
+    cart_total = data.get('total', 0)
+
+    if not coupon_code:
+        return jsonify({'valid': False, 'message': 'الرجاء إدخال الكود'})
+
+    coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
+
+    if not coupon:
+        return jsonify({'valid': False, 'message': 'الكود غير صحيح أو غير مفعل'})
+
+    is_valid = True
+    reason = ""
+    if coupon.coupon_type == 'time':
+        now = datetime.utcnow()
+        if coupon.start_date and now < coupon.start_date:
+            is_valid = False
+            reason = 'لم يبدأ الكوبون بعد'
+        if coupon.end_date and now > coupon.end_date:
+            is_valid = False
+            reason = 'انتهت صلاحية الكوبون'
+    elif coupon.coupon_type == 'quantity':
+        if coupon.max_uses and coupon.used_count >= coupon.max_uses:
+            is_valid = False
+            reason = 'تم استنفاد الكوبون'
+
+    if not is_valid:
+        return jsonify({'valid': False, 'message': reason})
+
+    discount = cart_total * (coupon.discount_percent / 100)
+    new_total = cart_total - discount
+
+    return jsonify({
+        'valid': True,
+        'discount_percent': coupon.discount_percent,
+        'discount_amount': round(discount, 2),
+        'new_total': round(new_total, 2),
+        'message': f'تم تطبيق الخصم: {coupon.discount_percent}%'
+    })
+
+
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     if request.method == 'POST':
@@ -190,7 +235,6 @@ def checkout():
                 total += subtotal
                 items.append({'product': product, 'quantity': qty, 'subtotal': subtotal})
 
-        # ===== معالجة الكوبون (زمني / عددي / مؤثر) =====
         discount = 0
         applied_coupon = None
         if coupon_code:
@@ -247,7 +291,6 @@ def checkout():
             )
             db.session.add(order_item)
 
-        # ===== عمولة المسوق (15% على المبلغ بعد الخصم) =====
         if marketer_code:
             marketer = Marketer.query.filter_by(code=marketer_code, status='approved').first()
             if marketer:
@@ -262,7 +305,6 @@ def checkout():
                 marketer.total_sales += total
                 marketer.total_commission += commission
 
-        # ===== عمولة المؤثر (5% محسوبة على السعر الأصلي قبل الخصم) =====
         if applied_coupon and applied_coupon.coupon_type == 'influencer':
             commission = (total + discount) * (applied_coupon.influencer_commission_percent / 100)
             applied_coupon.influencer_total_sales = (applied_coupon.influencer_total_sales or 0) + total
@@ -274,7 +316,15 @@ def checkout():
         flash('تم استلام طلبك بنجاح! سنتواصل معك قريباً.', 'success')
         return redirect(url_for('order_success', id=order.id))
 
-    return render_template('checkout.html', wilayas=WILAYAS)
+    # حساب الإجمالي لعرضه في الصفحة (GET)
+    cart = session.get('cart', {})
+    total = 0
+    for pid, qty in cart.items():
+        product = Product.query.get(int(pid))
+        if product:
+            total += product.price * qty
+
+    return render_template('checkout.html', wilayas=WILAYAS, total=total)
 
 
 @app.route('/order-success/<int:id>')
@@ -601,9 +651,7 @@ def admin_order_status(id, status):
 @login_required
 def admin_order_delete(id):
     order = Order.query.get_or_404(id)
-    # حذف عناصر الطلب أولاً لتجنب أخطاء قاعدة البيانات
     OrderItem.query.filter_by(order_id=id).delete()
-    # حذف الطلب نفسه
     db.session.delete(order)
     db.session.commit()
     flash('تم حذف الطلب بنجاح', 'success')
@@ -896,26 +944,22 @@ with app.app_context():
                 db.session.rollback()
                 print(f"Error adding column {column}: {e}")
 
-    # ترحيل جدول coupon
     add_column_if_missing('coupon', 'influencer_name', 'VARCHAR(100)')
     add_column_if_missing('coupon', 'influencer_commission_percent', 'FLOAT DEFAULT 0')
     add_column_if_missing('coupon', 'influencer_total_sales', 'FLOAT DEFAULT 0')
     add_column_if_missing('coupon', 'influencer_total_commission', 'FLOAT DEFAULT 0')
     add_column_if_missing('coupon', 'influencer_total_paid', 'FLOAT DEFAULT 0')
 
-    # ترحيل جدول order
     add_column_if_missing('order', 'wilaya', 'VARCHAR(100)')
     add_column_if_missing('order', 'daira', 'VARCHAR(100)')
     add_column_if_missing('order', 'delivery_type', 'VARCHAR(50)')
 
-    # إضافة الفهرس الفريد
     try:
         db.session.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_coupon_influencer_name ON coupon (influencer_name)"))
         db.session.commit()
     except Exception:
         db.session.rollback()
 
-    # إنشاء حساب المدير
     admin_username = os.getenv('ADMIN_USERNAME', 'admin')
     if not User.query.filter_by(username=admin_username).first():
         admin = User(

@@ -17,16 +17,18 @@
         border: 1px solid var(--dark-border);
         color: var(--white);
     }
-    .ts-wrapper .ts-dropdown .option {
-        color: var(--gray);
+    .ts-wrapper .ts-dropdown .option { color: var(--gray); }
+    .ts-wrapper .ts-dropdown .option.active { background-color: var(--dark-border); color: var(--white); }
+    .ts-wrapper .ts-control input { color: var(--white) !important; }
+    
+    .coupon-message {
+        margin-top: 0.5rem;
+        font-weight: bold;
+        font-size: 1rem;
+        display: none;
     }
-    .ts-wrapper .ts-dropdown .option.active {
-        background-color: var(--dark-border);
-        color: var(--white);
-    }
-    .ts-wrapper .ts-control input {
-        color: var(--white) !important;
-    }
+    .coupon-success { color: var(--success); }
+    .coupon-error { color: var(--danger); }
 </style>
 {% endblock %}
 
@@ -34,7 +36,7 @@
 <section class="checkout-section">
     <h1>إتمام الطلب</h1>
 
-    <form method="POST" class="checkout-form">
+    <form method="POST" class="checkout-form" id="checkoutForm">
         <h2>معلومات التوصيل</h2>
         <input type="text" name="name" placeholder="الاسم الكامل" required>
         <input type="text" name="phone" placeholder="رقم الهاتف" required>
@@ -59,8 +61,19 @@
         <textarea name="notes" placeholder="ملاحظات إضافية (اختياري)"></textarea>
 
         <h2>كود الخصم / المسوق</h2>
-        <input type="text" name="coupon" placeholder="كود الخصم (اختياري)">
-        <input type="text" name="marketer_code" placeholder="كود المسوق (اختياري)">
+        <input type="text" name="coupon" id="coupon_input" placeholder="كود الخصم (اختياري)">
+        
+        <!-- رسالة نجاح أو خطأ الكوبون -->
+        <div id="coupon_message" class="coupon-message"></div>
+        
+        <!-- حقل مخفي للسعر الإجمالي -->
+        <input type="hidden" id="cart_total_input" value="{{ total }}">
+        
+        <div style="margin-top: 0.5rem; color: var(--gray); font-size: 1.1rem;">
+            الإجمالي الحالي: <span id="display_total" style="color: var(--gold); font-weight: bold;">{{ total }}</span> دج
+        </div>
+
+        <input type="text" name="marketer_code" placeholder="كود المسوق (اختياري)" style="margin-top: 1rem;">
 
         <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">تأكيد الطلب</button>
     </form>
@@ -72,9 +85,9 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // ===== منطق الولايات والبلديات =====
     const wilayasUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/wilayas.json";
     const communesUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/communes.json";
-
     let allCommunes = [];
     let tsWilaya, tsDaira;
 
@@ -82,7 +95,6 @@ document.addEventListener("DOMContentLoaded", function() {
         fetch(wilayasUrl).then(res => res.json()),
         fetch(communesUrl).then(res => res.json())
     ]).then(([wilayasData, communesData]) => {
-        
         const wilayas = wilayasData.wilayas || wilayasData;
         allCommunes = communesData.communes || communesData;
 
@@ -97,7 +109,6 @@ document.addEventListener("DOMContentLoaded", function() {
             wilayaSelect.appendChild(option);
         });
 
-        // التعديل هنا: إضافة maxOptions: null لإلغاء حد الـ 50
         tsWilaya = new TomSelect("#wilaya_select", {
             create: false,
             maxOptions: null, 
@@ -107,7 +118,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (!selectedOption) return;
                 
                 const wilayaNameAr = selectedOption.dataset.nameAr;
-
                 const filteredCommunes = allCommunes.filter(c => {
                     return (c.wilaya_name && c.wilaya_name === wilayaNameAr) || 
                            (c.wilaya_code && c.wilaya_code == value);
@@ -129,13 +139,51 @@ document.addEventListener("DOMContentLoaded", function() {
 
         tsDaira = new TomSelect("#daira_select", {
             create: false,
-            maxOptions: null, // إضافة هذا السطر هنا أيضاً للبلديات
+            maxOptions: null,
             sortField: { field: "text", direction: "asc" }
         });
+    }).catch(error => console.error("خطأ في تحميل البيانات:", error));
 
-    }).catch(error => {
-        console.error("خطأ في تحميل البيانات:", error);
-        document.getElementById('wilaya_select').innerHTML = '<option value="">فشل تحميل الولايات، يرجى المحاولة لاحقاً</option>';
+    // ===== منطق التحقق المباشر من الكوبون =====
+    const couponInput = document.getElementById('coupon_input');
+    const couponMessage = document.getElementById('coupon_message');
+    const totalInput = document.getElementById('cart_total_input');
+    const displayTotal = document.getElementById('display_total');
+
+    let debounceTimer;
+
+    couponInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const code = this.value.trim();
+        const total = parseFloat(totalInput.value) || 0;
+
+        if (!code) {
+            couponMessage.style.display = 'none';
+            displayTotal.textContent = total;
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetch('/api/check-coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, total: total })
+            })
+            .then(res => res.json())
+            .then(data => {
+                couponMessage.style.display = 'block';
+                if (data.valid) {
+                    couponMessage.className = 'coupon-message coupon-success';
+                    couponMessage.textContent = `تم تطبيق الخصم! (${data.discount_percent}%) - وفرت ${data.discount_amount} دج`;
+                    displayTotal.textContent = data.new_total;
+                } else {
+                    couponMessage.className = 'coupon-message coupon-error';
+                    couponMessage.textContent = data.message;
+                    displayTotal.textContent = total;
+                }
+            })
+            .catch(err => console.error('خطأ في الاتصال:', err));
+        }, 600);
     });
 });
 </script>
