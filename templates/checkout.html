@@ -3,10 +3,8 @@
 {% block title %}إتمام الطلب{% endblock %}
 
 {% block extra_css %}
-<!-- مكتبة Tom Select للبحث في القوائم -->
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 <style>
-    /* تخصيص شكل القوائم لتناسب التصميم الداكن */
     .ts-wrapper .ts-control {
         background-color: var(--dark-card);
         border: 1px solid var(--dark-border);
@@ -42,13 +40,11 @@
         <input type="text" name="phone" placeholder="رقم الهاتف" required>
         <textarea name="address" placeholder="العنوان بالتفصيل (الشارع، الحي...)" required></textarea>
 
-        <!-- حقل الولاية -->
         <label style="color: var(--gold);">الولاية:</label>
         <select id="wilaya_select" name="wilaya" placeholder="ابحث عن الولاية..." required>
             <option value="">جاري تحميل الولايات...</option>
         </select>
 
-        <!-- حقل البلدية -->
         <label style="color: var(--gold);">البلدية:</label>
         <select id="daira_select" name="daira" placeholder="اختر الولاية أولاً..." required>
             <option value="">اختر الولاية أولاً</option>
@@ -76,58 +72,64 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // روابط مباشرة لملفات JSON من المستودع الذي اخترته
+    // استخدام روابط مباشرة (Raw) من المستودع
     const wilayasUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/wilayas.json";
     const communesUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/communes.json";
 
-    let allCommunes = []; // لتخزين جميع البلديات هنا
-    let tsWilaya, tsDaira; // متغيرات مكتبة Tom Select
+    let allCommunes = [];
+    let tsWilaya, tsDaira;
 
-    // 1. جلب ملف الولايات وملف البلديات معاً
     Promise.all([
         fetch(wilayasUrl).then(res => res.json()),
         fetch(communesUrl).then(res => res.json())
     ]).then(([wilayasData, communesData]) => {
         
-        // التحقق من هيكل البيانات (المستودع يضع البيانات داخل مفتاح مثل wilayas أو communes)
+        // استخراج المصفوفات من البيانات (حسب هيكل المستودع)
         const wilayas = wilayasData.wilayas || wilayasData;
         allCommunes = communesData.communes || communesData;
 
         const wilayaSelect = document.getElementById('wilaya_select');
         wilayaSelect.innerHTML = '<option value="">اختر الولاية...</option>';
 
-        // تعبئة قائمة الولايات
+        // تعبئة قائمة الولايات (تأكد من ظهور 69 ولاية)
         wilayas.forEach(w => {
             const option = document.createElement('option');
-            option.value = w.nom_ar; // القيمة التي سترسل للسيرفر
-            option.textContent = `${w.code} - ${w.nom_ar}`; // عرض الرمز والاسم
+            // نستخدم الرمز أو الاسم كقيمة
+            option.value = w.code || w.nom_ar; 
+            option.textContent = `${w.code} - ${w.nom_ar}`; 
+            // تخزين الاسم العربي للولاية في data-attribute للاستخدام في الفلترة
+            option.dataset.nameAr = w.nom_ar;
             wilayaSelect.appendChild(option);
         });
 
-        // 2. تهيئة مكتبة Tom Select
         tsWilaya = new TomSelect("#wilaya_select", {
             create: false,
             sortField: { field: "text", direction: "asc" },
             onChange: function(value) {
-                // عند اختيار ولاية، نقوم بتصفية البلديات
                 const selectedOption = wilayaSelect.querySelector(`option[value="${value}"]`);
                 if (!selectedOption) return;
                 
-                const selectedText = selectedOption.textContent;
-                // استخراج رمز الولاية (مثلاً "16" من "16 - الجزائر")
-                const wilayaCode = selectedText.split(' - ')[0].padStart(2, '0');
+                // جلب اسم الولاية العربي للبحث في البلديات
+                const wilayaNameAr = selectedOption.dataset.nameAr;
 
-                // تصفية البلديات التي تنتمي لهذه الولاية
-                const filteredCommunes = allCommunes.filter(c => c.wilaya_code == wilayaCode);
+                // فلترة البلديات: نبحث عن البلديات التي ينتمي اسمها أو رمزها لهذه الولاية
+                // ملاحظة: ملف البلديات قد يحتوي على حقل wilaya_name أو wilaya_code
+                const filteredCommunes = allCommunes.filter(c => {
+                    // نتحقق من تطابق اسم الولاية (إذا كان موجوداً في ملف البلديات)
+                    return (c.wilaya_name && c.wilaya_name === wilayaNameAr) || 
+                           (c.wilaya_code && c.wilaya_code == value);
+                });
 
-                // تفريغ قائمة البلديات
                 tsDaira.clearOptions();
                 tsDaira.addOption({ value: "", text: "اختر البلدية..." });
 
-                // إضافة البلديات المصفاة
-                filteredCommunes.forEach(c => {
-                    tsDaira.addOption({ value: c.nom_ar, text: c.nom_ar });
-                });
+                if (filteredCommunes.length === 0) {
+                    tsDaira.addOption({ value: "غير محددة", text: "لا توجد بلديات مسجلة لهذه الولاية" });
+                } else {
+                    filteredCommunes.forEach(c => {
+                        tsDaira.addOption({ value: c.nom_ar || c.name_ar, text: c.nom_ar || c.name_ar });
+                    });
+                }
                 tsDaira.refreshOptions(false);
             }
         });
