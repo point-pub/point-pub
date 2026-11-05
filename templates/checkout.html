@@ -1,6 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}إتمام الطلب - POINT PUB{% endblock %}
+{% block title %}إتمام الطلب{% endblock %}
+
+{% block extra_css %}
+<!-- مكتبة Tom Select للبحث في القوائم -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<style>
+    /* تخصيص شكل القوائم لتناسب التصميم الداكن */
+    .ts-wrapper .ts-control {
+        background-color: var(--dark-card);
+        border: 1px solid var(--dark-border);
+        color: var(--white);
+        border-radius: 12px;
+        padding: 10px 15px;
+    }
+    .ts-wrapper .ts-dropdown {
+        background-color: var(--dark-card);
+        border: 1px solid var(--dark-border);
+        color: var(--white);
+    }
+    .ts-wrapper .ts-dropdown .option {
+        color: var(--gray);
+    }
+    .ts-wrapper .ts-dropdown .option.active {
+        background-color: var(--dark-border);
+        color: var(--white);
+    }
+    .ts-wrapper .ts-control input {
+        color: var(--white) !important;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <section class="checkout-section">
@@ -9,17 +39,108 @@
     <form method="POST" class="checkout-form">
         <h2>معلومات التوصيل</h2>
         <input type="text" name="name" placeholder="الاسم الكامل" required>
-        <input type="tel" name="phone" placeholder="رقم الهاتف" required>
-        <input type="text" name="city" placeholder="الولاية / المدينة" required>
-        <textarea name="address" placeholder="العنوان الكامل" required></textarea>
+        <input type="text" name="phone" placeholder="رقم الهاتف" required>
+        <textarea name="address" placeholder="العنوان بالتفصيل (الشارع، الحي...)" required></textarea>
+
+        <!-- حقل الولاية -->
+        <label style="color: var(--gold);">الولاية:</label>
+        <select id="wilaya_select" name="wilaya" placeholder="ابحث عن الولاية..." required>
+            <option value="">جاري تحميل الولايات...</option>
+        </select>
+
+        <!-- حقل البلدية -->
+        <label style="color: var(--gold);">البلدية:</label>
+        <select id="daira_select" name="daira" placeholder="اختر الولاية أولاً..." required>
+            <option value="">اختر الولاية أولاً</option>
+        </select>
+
+        <h2>طريقة التوصيل</h2>
+        <select name="delivery_type" required>
+            <option value="home">توصيل إلى المنزل</option>
+            <option value="office">توصيل إلى المكتب</option>
+        </select>
+
         <textarea name="notes" placeholder="ملاحظات إضافية (اختياري)"></textarea>
 
-        <h2>الكوبون وكود المسوق</h2>
+        <h2>كود الخصم / المسوق</h2>
         <input type="text" name="coupon" placeholder="كود الخصم (اختياري)">
         <input type="text" name="marketer_code" placeholder="كود المسوق (اختياري)">
 
-        <button type="submit" class="btn-primary">إرسال الطلب</button>
-        <p class="form-note">الدفع عند الاستلام</p>
+        <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">تأكيد الطلب</button>
     </form>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // روابط مباشرة لملفات JSON من المستودع الذي اخترته
+    const wilayasUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/wilayas.json";
+    const communesUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/communes.json";
+
+    let allCommunes = []; // لتخزين جميع البلديات هنا
+    let tsWilaya, tsDaira; // متغيرات مكتبة Tom Select
+
+    // 1. جلب ملف الولايات وملف البلديات معاً
+    Promise.all([
+        fetch(wilayasUrl).then(res => res.json()),
+        fetch(communesUrl).then(res => res.json())
+    ]).then(([wilayasData, communesData]) => {
+        
+        // التحقق من هيكل البيانات (المستودع يضع البيانات داخل مفتاح مثل wilayas أو communes)
+        const wilayas = wilayasData.wilayas || wilayasData;
+        allCommunes = communesData.communes || communesData;
+
+        const wilayaSelect = document.getElementById('wilaya_select');
+        wilayaSelect.innerHTML = '<option value="">اختر الولاية...</option>';
+
+        // تعبئة قائمة الولايات
+        wilayas.forEach(w => {
+            const option = document.createElement('option');
+            option.value = w.nom_ar; // القيمة التي سترسل للسيرفر
+            option.textContent = `${w.code} - ${w.nom_ar}`; // عرض الرمز والاسم
+            wilayaSelect.appendChild(option);
+        });
+
+        // 2. تهيئة مكتبة Tom Select
+        tsWilaya = new TomSelect("#wilaya_select", {
+            create: false,
+            sortField: { field: "text", direction: "asc" },
+            onChange: function(value) {
+                // عند اختيار ولاية، نقوم بتصفية البلديات
+                const selectedOption = wilayaSelect.querySelector(`option[value="${value}"]`);
+                if (!selectedOption) return;
+                
+                const selectedText = selectedOption.textContent;
+                // استخراج رمز الولاية (مثلاً "16" من "16 - الجزائر")
+                const wilayaCode = selectedText.split(' - ')[0].padStart(2, '0');
+
+                // تصفية البلديات التي تنتمي لهذه الولاية
+                const filteredCommunes = allCommunes.filter(c => c.wilaya_code == wilayaCode);
+
+                // تفريغ قائمة البلديات
+                tsDaira.clearOptions();
+                tsDaira.addOption({ value: "", text: "اختر البلدية..." });
+
+                // إضافة البلديات المصفاة
+                filteredCommunes.forEach(c => {
+                    tsDaira.addOption({ value: c.nom_ar, text: c.nom_ar });
+                });
+                tsDaira.refreshOptions(false);
+            }
+        });
+
+        tsDaira = new TomSelect("#daira_select", {
+            create: false,
+            sortField: { field: "text", direction: "asc" }
+        });
+
+    }).catch(error => {
+        console.error("خطأ في تحميل البيانات:", error);
+        document.getElementById('wilaya_select').innerHTML = '<option value="">فشل تحميل الولايات، يرجى المحاولة لاحقاً</option>';
+    });
+});
+</script>
 {% endblock %}
