@@ -597,6 +597,19 @@ def admin_order_status(id, status):
     return redirect(url_for('admin_order_detail', id=id))
 
 
+@app.route('/admin/order/delete/<int:id>')
+@login_required
+def admin_order_delete(id):
+    order = Order.query.get_or_404(id)
+    # حذف عناصر الطلب أولاً لتجنب أخطاء قاعدة البيانات
+    OrderItem.query.filter_by(order_id=id).delete()
+    # حذف الطلب نفسه
+    db.session.delete(order)
+    db.session.commit()
+    flash('تم حذف الطلب بنجاح', 'success')
+    return redirect(url_for('admin_orders'))
+
+
 # ===== إدارة المسوقين =====
 @app.route('/admin/marketers')
 @login_required

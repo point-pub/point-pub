@@ -25,14 +25,24 @@
                 <td>{{ order.id }}</td>
                 <td>{{ order.customer_name }}</td>
                 <td>{{ order.customer_phone }}</td>
-                <td>{{ order.customer_city }}</td>
+                <td>{{ order.wilaya or order.customer_city or 'غير محدد' }}</td>
                 <td>{{ order.total }} دج</td>
                 <td>{{ order.status }}</td>
                 <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
-                <td><a href="/admin/order/{{ order.id }}" class="btn-view">عرض</a></td>
+                <td>
+                    <a href="{{ url_for('admin_order_detail', id=order.id) }}" class="btn-view">عرض</a>
+                    
+                    <a href="{{ url_for('admin_order_delete', id=order.id) }}" 
+                       class="btn-delete" 
+                       onclick="return confirm('هل أنت متأكد من حذف هذه الطلبية نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
+                       حذف
+                    </a>
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="8" style="text-align:center;">لا توجد طلبات</td></tr>
+            <tr>
+                <td colspan="8" style="text-align: center; color: var(--gray); padding: 2rem;">لا توجد طلبات حالياً.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
