@@ -72,7 +72,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // استخدام روابط مباشرة (Raw) من المستودع
     const wilayasUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/wilayas.json";
     const communesUrl = "https://raw.githubusercontent.com/el-amin-dev/algeria-wilayas-communes/main/data/communes.json";
 
@@ -84,38 +83,32 @@ document.addEventListener("DOMContentLoaded", function() {
         fetch(communesUrl).then(res => res.json())
     ]).then(([wilayasData, communesData]) => {
         
-        // استخراج المصفوفات من البيانات (حسب هيكل المستودع)
         const wilayas = wilayasData.wilayas || wilayasData;
         allCommunes = communesData.communes || communesData;
 
         const wilayaSelect = document.getElementById('wilaya_select');
         wilayaSelect.innerHTML = '<option value="">اختر الولاية...</option>';
 
-        // تعبئة قائمة الولايات (تأكد من ظهور 69 ولاية)
         wilayas.forEach(w => {
             const option = document.createElement('option');
-            // نستخدم الرمز أو الاسم كقيمة
             option.value = w.code || w.nom_ar; 
             option.textContent = `${w.code} - ${w.nom_ar}`; 
-            // تخزين الاسم العربي للولاية في data-attribute للاستخدام في الفلترة
             option.dataset.nameAr = w.nom_ar;
             wilayaSelect.appendChild(option);
         });
 
+        // التعديل هنا: إضافة maxOptions: null لإلغاء حد الـ 50
         tsWilaya = new TomSelect("#wilaya_select", {
             create: false,
+            maxOptions: null, 
             sortField: { field: "text", direction: "asc" },
             onChange: function(value) {
                 const selectedOption = wilayaSelect.querySelector(`option[value="${value}"]`);
                 if (!selectedOption) return;
                 
-                // جلب اسم الولاية العربي للبحث في البلديات
                 const wilayaNameAr = selectedOption.dataset.nameAr;
 
-                // فلترة البلديات: نبحث عن البلديات التي ينتمي اسمها أو رمزها لهذه الولاية
-                // ملاحظة: ملف البلديات قد يحتوي على حقل wilaya_name أو wilaya_code
                 const filteredCommunes = allCommunes.filter(c => {
-                    // نتحقق من تطابق اسم الولاية (إذا كان موجوداً في ملف البلديات)
                     return (c.wilaya_name && c.wilaya_name === wilayaNameAr) || 
                            (c.wilaya_code && c.wilaya_code == value);
                 });
@@ -136,6 +129,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         tsDaira = new TomSelect("#daira_select", {
             create: false,
+            maxOptions: null, // إضافة هذا السطر هنا أيضاً للبلديات
             sortField: { field: "text", direction: "asc" }
         });
 
